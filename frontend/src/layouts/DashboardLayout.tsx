@@ -1,66 +1,55 @@
-import React, { useState } from 'react';
-import { Outlet } from 'react-router-dom';
+// components/MainLayout.tsx
+import React, { ReactNode, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Header from '../components/dash/Header';
-import Sidebar from '../components/dash/Sidebar';
-import { ThemeContext } from '../components/dash/Header';
+import BottomNav from '../components/dash/BottomNav';
+import ContentContainer from '../components/dash/ContentContainer';
+import authService from '../services/Auth'; // uthAdjust path as needed
 
-// Define an interface for the theme context value
-interface ThemeContextType {
-  darkMode: boolean;
-  toggleDarkMode: () => void;
+interface MainLayoutProps {
+  children: ReactNode;
+  title?: string;
+  activeNav?: string;
+  contentTitle?: string;
 }
 
-const DashboardLayout: React.FC = () => {
-  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
-  const [darkMode, setDarkMode] = useState<boolean>(false);
+const MainLayout: React.FC<MainLayoutProps> = ({
+  children,
+  title = "Dashboard",
+  activeNav = "home",
+  contentTitle
+}) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  useEffect(() => {
+    // Check if user is authenticated
+    if (!authService.isAuthenticated()) {
+      // Redirect to login page if not authenticated
+      navigate('/connexion', { 
+        state: { from: location.pathname } 
+      });
+    }
+  }, [navigate, location]);
 
-  const toggleSidebar = () => {
-    setSidebarOpen(prev => !prev);
-  };
-
-  const toggleDarkMode = () => {
-    setDarkMode(prev => !prev);
-  };
-
-  // Theme context value
-  const themeContextValue: ThemeContextType = {
-    darkMode,
-    toggleDarkMode
-  };
+  // Don't render content until authentication check is complete
+  if (!authService.isAuthenticated()) {
+    return null; // Or a loading spinner
+  }
 
   return (
-    <ThemeContext.Provider value={themeContextValue}>
-      <div className={`flex h-screen ${darkMode ? 'bg-gray-900' : 'bg-gray-100'} transition-colors duration-300`}>
-        <Sidebar 
-          sidebarOpen={sidebarOpen} 
-          toggleSidebar={toggleSidebar} 
-          darkMode={darkMode} 
-        />
-        
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header 
-            sidebarOpen={sidebarOpen} 
-            toggleSidebar={toggleSidebar} 
-          />
-          <main 
-            className={`
-              flex-1 
-              overflow-y-auto 
-              p-6 
-              ${darkMode 
-                ? 'bg-gray-900 text-white' 
-                : 'bg-gray-100 text-gray-800'
-              } 
-              transition-colors 
-              duration-300
-            `}
-          >
-            <Outlet />
-          </main>
-        </div>
-      </div>
-    </ThemeContext.Provider>
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      <Header title={title} />
+      
+      <main className="flex-grow">
+        <ContentContainer title={contentTitle}>
+          {children}
+        </ContentContainer>
+      </main>
+      
+      <BottomNav active={activeNav} />
+    </div>
   );
 };
 
-export default DashboardLayout;
+export default MainLayout;

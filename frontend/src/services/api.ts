@@ -1,225 +1,102 @@
-import axios from "axios";
 
-// Définition de l'URL de base et de la clé API
-const BASE_URL = "https://apiv2.allsportsapi.com/football";
-const API_KEY = "ae9e70e2497a1b07d2a8bf9da380625bbb863b266fcc5d8e9248c823614bd7f6";
+// fichier: src/services/api.ts
+import axios from 'axios';
 
-// Interface pour le type de données retournées
-interface Country {
-  country_id: string;
-  country_name: string;
-  country_logo?: string;
-}
+const API_KEY = '769bfc83d93022ffa336ed60deb1604f2c51cfb4fef799fef5a56cbba9c89b39'; 
+const BASE_URL = 'https://apiv3.apifootball.com/';
 
-// Fonction pour récupérer la liste des pays
-export const getCountries = async (): Promise<Country[]> => {
+// Type definitions
+type ApiParams = Record<string, string>;
+
+// Generic API call function
+const apiCall = async (action: string, params: ApiParams) => {
   try {
-    const response = await axios.get(`${BASE_URL}/?met=Countries&APIkey=${API_KEY}`);
-    return response.data.result || []; // Retourne la liste des pays ou un tableau vide
-  } catch (error) {
-    console.error("Erreur lors de la récupération des pays :", error);
-    return [];
-  }
-};
-
-// Interface pour les ligues
-interface League {
-  league_key: string;
-  league_name: string;
-  country_key: string;
-  country_name: string;
-  league_logo?: string;
-  country_logo?: string;
-}
-
-// Fonction pour récupérer la liste des ligues
-export const getLeagues = async (): Promise<League[]> => {
-  try {
-    const params = new URLSearchParams({
-      met: "Leagues",
-      APIkey: API_KEY
+    const queryParams = new URLSearchParams({
+      action,
+      APIkey: API_KEY,
+      ...params
     });
     
-    // Nous ne filtrons plus par pays - toujours retourner toutes les ligues
-    const response = await axios.get(`${BASE_URL}/?${params.toString()}`);
-    return response.data.result || []; // Retourne la liste des ligues ou un tableau vide
-  } catch (error) {
-    console.error("Erreur lors de la récupération des ligues :", error);
-    return [];
-  }
-};
-
-// Interface pour les matchs (fixtures)
-interface Fixture {
-  event_key: string;
-  event_date: string;
-  event_time: string;
-  event_home_team: string;
-  home_team_key: string;
-  event_away_team: string;
-  away_team_key: string;
-  event_halftime_result: string;
-  event_final_result: string;
-  event_ft_result: string;
-  event_penalty_result: string;
-  event_status: string;
-  country_name: string;
-  league_name: string;
-  league_key: string;
-  league_round: string;
-  league_season: string;
-  event_live: string;
-  event_stadium?: string;
-  event_referee?: string;
-  home_team_logo?: string;
-  away_team_logo?: string;
-  event_country_key: string;
-  league_logo?: string;
-  country_logo?: string;
-  event_home_formation?: string;
-  event_away_formation?: string;
-}
-
-// Options pour récupérer les matchs
-interface FixturesOptions {
-  from?: string;        // Format: YYYY-MM-DD
-  to?: string;          // Format: YYYY-MM-DD
-  timezone?: string;    // Format TZ: America/New_York
-  countryId?: string;
-  leagueId?: string;
-  matchId?: string;
-  teamId?: string;
-  leagueGroup?: string;
-  withPlayerStats?: boolean;
-}
-
-// Fonction pour récupérer les matchs (fixtures)
-export const getFixtures = async (options: FixturesOptions = {}): Promise<Fixture[]> => {
-  try {
-    const params = new URLSearchParams({
-      met: "Fixtures",
-      APIkey: API_KEY
-    });
-
-    // Ajouter les options à l'URL s'ils sont définis
-    if (options.from) params.append("from", options.from);
-    if (options.to) params.append("to", options.to);
-    if (options.timezone) params.append("timezone", options.timezone);
-    if (options.countryId) params.append("countryId", options.countryId);
-    if (options.leagueId) params.append("leagueId", options.leagueId);
-    if (options.matchId) params.append("matchId", options.matchId);
-    if (options.teamId) params.append("teamId", options.teamId);
-    if (options.leagueGroup) params.append("leagueGroup", options.leagueGroup);
-    if (options.withPlayerStats) params.append("withPlayerStats", "1");
-
-    const response = await axios.get(`${BASE_URL}/?${params.toString()}`);
-    return response.data.result || [];
-  } catch (error) {
-    console.error("Erreur lors de la récupération des matchs :", error);
-    return [];
-  }
-};
-
-// Interface pour les données de Head to Head
-interface H2HResult {
-  H2H: Fixture[];
-  firstTeamResults: Fixture[];
-  secondTeamResults: Fixture[];
-}
-
-// Fonction pour récupérer les données de head-to-head
-export const getH2H = async (
-  firstTeamId: string,
-  secondTeamId: string,
-  timezone?: string
-): Promise<H2HResult | null> => {
-  try {
-    const params = new URLSearchParams({
-      met: "H2H",
-      APIkey: API_KEY,
-      firstTeamId,
-      secondTeamId
-    });
-
-    if (timezone) params.append("timezone", timezone);
-
-    const response = await axios.get(`${BASE_URL}/?${params.toString()}`);
-    return response.data.result || null;
-  } catch (error) {
-    console.error("Erreur lors de la récupération des données H2H :", error);
-    return null;
-  }
-};
-
-// Interface pour les classements
-interface StandingTeam {
-  standing_place: string;
-  standing_place_type: string | null;
-  standing_team: string;
-  standing_P: string; // Matches played
-  standing_W: string; // Wins
-  standing_D: string; // Draws
-  standing_L: string; // Losses
-  standing_F: string; // Goals for
-  standing_A: string; // Goals against
-  standing_GD: string; // Goal difference
-  standing_PTS: string; // Points
-  team_key: string;
-  league_key: string;
-  league_season: string;
-  league_round: string;
-}
-
-interface StandingsResult {
-  total: StandingTeam[];
-  home: StandingTeam[];
-  away: StandingTeam[];
-}
-
-// Fonction pour récupérer les classements
-export const getStandings = async (leagueId: string): Promise<StandingsResult | null> => {
-  try {
-    const params = new URLSearchParams({
-      met: "Standings",
-      APIkey: API_KEY,
-      leagueId
-    });
-
-    const response = await axios.get(`${BASE_URL}/?${params.toString()}`);
-    return response.data.result || null;
-  } catch (error) {
-    console.error("Erreur lors de la récupération des classements :", error);
-    return null;
-  }
-};
-
-// Fonction pour récupérer les matchs en direct - déclaration manquante précédemment
-export const getLiveMatches = async () => {
-  try {
-    const params = new URLSearchParams({
-      met: "Livescore",
-      APIkey: API_KEY
-    });
+    const response = await axios.get(`${BASE_URL}?${queryParams.toString()}`);
     
-    const response = await axios.get(`${BASE_URL}/?${params.toString()}`);
-    return response.data.result || [];
+    if (response.data && response.data.error) {
+      console.error('API Error:', response.data.message);
+      return { error: true, message: response.data.message };
+    }
+    
+    return response.data;
   } catch (error) {
-    console.error("Erreur lors de la récupération des matchs en direct :", error);
-    return [];
+    console.error(`Error in ${action} call:`, error);
+    return { error: true, message: 'Failed to fetch data. Please try again.' };
   }
 };
 
+// Get list of countries
+export const getCountries = async () => {
+  return apiCall('get_countries', {});
+};
 
+// Get leagues by country ID
+export const getLeaguesByCountry = async (countryId: string) => {
+  return apiCall('get_leagues', { country_id: countryId });
+};
 
+// Get matches by league ID and date range
+export const getMatches = async (leagueId: string, fromDate: string, toDate: string) => {
+  return apiCall('get_events', {
+    league_id: leagueId,
+    from: fromDate,
+    to: toDate
+  });
+};
 
-// Exporter toutes les fonctions utilitaires combinées
-export const FootballAPI = {
+// Get team information by team ID
+export const getTeamInfo = async (teamId: string) => {
+  return apiCall('get_teams', { team_id: teamId });
+};
+
+// Get standings by league ID
+export const getStandings = async (leagueId: string) => {
+  return apiCall('get_standings', { league_id: leagueId });
+};
+
+// Get head to head matches between two teams
+export const getH2H = async (firstTeam: string, secondTeam: string) => {
+  return apiCall('get_H2H', {
+    firstTeam,
+    secondTeam
+  });
+};
+
+// Get match statistics
+export const getMatchStatistics = async (matchId: string) => {
+  return apiCall('get_statistics', { match_id: matchId });
+};
+
+// Get match lineups
+export const getMatchLineups = async (matchId: string) => {
+  return apiCall('get_lineups', { match_id: matchId });
+};
+
+// Get match events (goals, cards, etc.)
+export const getMatchEvents = async (matchId: string) => {
+  return apiCall('get_events', { match_id: matchId });
+};
+
+// Get players by team ID
+export const getPlayers = async (teamId: string) => {
+  return apiCall('get_players', { team_id: teamId });
+};
+
+export default {
   getCountries,
-  getLeagues,
-  getLiveMatches,
-  getFixtures,
+  getLeaguesByCountry,
+  getMatches,
+  getTeamInfo,
+  getStandings,
   getH2H,
-  getStandings
+  getMatchStatistics,
+  getMatchLineups,
+  getMatchEvents,
+  getPlayers
 };
-
-export default FootballAPI;

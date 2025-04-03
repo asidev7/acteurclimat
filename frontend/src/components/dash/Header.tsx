@@ -1,79 +1,111 @@
-import React, { useContext } from 'react';
-import { UserIcon, BellIcon, SunIcon, MoonIcon } from '@heroicons/react/24/outline';
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/solid';
-
-// Contexte pour gérer le thème
-export const ThemeContext = React.createContext({
-  darkMode: false,
-  toggleDarkMode: () => {}
-});
+import React, { useState, useEffect } from 'react';
+import logo from '../../assets/logo1.png';
+import authService, { User } from '../../services/Auth'; // Adjust path as needed
 
 interface HeaderProps {
-  sidebarOpen: boolean;
-  toggleSidebar: () => void;
+  title?: string;
 }
 
-const Header: React.FC<HeaderProps> = ({ sidebarOpen, toggleSidebar }) => {
-  const { darkMode, toggleDarkMode } = useContext(ThemeContext);
-  
-  // Données utilisateur simulées
-  
-  
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`;
+const Header: React.FC<HeaderProps> = ({ title = "Dashboard" }) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (authService.isAuthenticated()) {
+        try {
+          const userData = await authService.getProfile();
+          setUser(userData);
+        } catch (error) {
+          console.error('Failed to fetch user profile:', error);
+        }
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  const getInitials = (user: User): string => {
+    const firstInitial = user.first_name ? user.first_name.charAt(0).toUpperCase() : '';
+    const lastInitial = user.last_name ? user.last_name.charAt(0).toUpperCase() : '';
+    
+    if (firstInitial && lastInitial) {
+      return `${firstInitial}${lastInitial}`;
+    } else if (firstInitial) {
+      return firstInitial;
+    } else if (user.username) {
+      return user.username.charAt(0).toUpperCase();
+    }
+    
+    return user.email.charAt(0).toUpperCase();
   };
-  
+
+  const handleLogout = () => {
+    authService.logout();
+    window.location.href = '/login'; // Redirect to login page
+  };
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
   return (
-    <header className={`${darkMode ? 'bg-gray-800 text-white p-3' : 'bg-white text-gray-800'} shadow-md transition-colors duration-300`}>
-      <div className="flex items-center justify-between px-4 py-3">
-        {/* Bouton pour mobile qui remplace le sidebar toggle */}
-        <div className="flex items-center">
-          <button 
-            onClick={toggleSidebar}
-            className={`mr-3 p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} lg:hidden transition-colors`}
-            aria-label={sidebarOpen ? "Fermer le menu" : "Ouvrir le menu"}
-          >
-            {sidebarOpen ? (
-              <XMarkIcon className="h-6 w-6" />
-            ) : (
-              <Bars3Icon className="h-6 w-6" />
-            )}
-          </button>
-          
-          <h2 className="text-xl font-semibold transition-all duration-300">
-            Dashboard
-          </h2>
-        </div>
-        
-        <div className="flex items-center space-x-3">
-          {/* Bouton mode sombre */}
-          <button 
-            onClick={toggleDarkMode} 
-            className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700 text-yellow-400' : 'hover:bg-gray-100 text-gray-600'} transition-colors`}
-            aria-label={darkMode ? "Passer au mode clair" : "Passer au mode sombre"}
-          >
-            {darkMode ? (
-              <SunIcon className="h-6 w-6" />
-            ) : (
-              <MoonIcon className="h-6 w-6" />
-            )}
-          </button>
-          
-          {/* Notifications */}
-          <button 
-            className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} relative transition-colors`}
-            aria-label="Notifications"
-          >
-            <BellIcon className={`h-6 w-6 ${darkMode ? 'text-gray-200' : 'text-gray-600'}`} />
-            <span className="absolute top-0 right-0 h-5 w-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
-              3
+    <header className="bg-blue-900 text-white p-4 flex justify-between items-center fixed top-0 left-0 right-0 z-40">
+      <div className="flex items-center space-x-3">
+        <img
+          src={logo}
+          alt="Logo"
+          className="w-10 h-10 rounded-xl object-cover"
+        />
+        <div>
+          <h1 className="text-xl font-bold tracking-wide">
+            {title}
+            <span className="ml-2 text-xs bg-green-500 text-white px-2 py-1 rounded-full align-middle">
+              PRO
             </span>
-          </button>
-          
-          {/* Infos utilisateur - caché sur mobile */}
-          
-         
+          </h1>
         </div>
+      </div>
+      
+      <div className="flex items-center space-x-4">
+        {user ? (
+          <div className="relative">
+            <div className="flex items-center space-x-3 cursor-pointer" onClick={toggleDropdown}>
+              <span className="hidden md:block text-sm">{user.email}</span>
+              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-medium">
+                {getInitials(user)}
+              </div>
+            </div>
+            
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+                <a href="/dashboard/abonnement" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                  Mon Compte
+                </a>
+                <a href="/profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                  Profile
+                </a>
+                <a href="/dashboard/parametres" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                  Settings
+                </a>
+                <button 
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <a href="/connexion" className="text-sm bg-blue-600 px-3 py-1 rounded-md">
+            Connexion
+          </a>
+        )}
+        
+        <button className="bg-blue-600 rounded-full w-8 h-8 flex items-center justify-center text-white">
+          ?
+        </button>
       </div>
     </header>
   );

@@ -20,6 +20,7 @@ ALLOWED_HOSTS = [
     'www.api.iaperibot.pro',  # Si tu veux également accepter les versions avec www
     'localhost',  # Exemple pour le développement local
     '127.0.0.1',  # Exemple pour le développement local
+    'd3b2-156-0-214-32.ngrok-free.app',
 ]
 
 
@@ -40,20 +41,11 @@ INSTALLED_APPS = [
     'drf_yasg',
     'core',
     'corsheaders', 
-    'api',
 
 ]
-
 AUTH_USER_MODEL = 'core.User'  # Modèle User personnalisé
 
 
-PAYDUNYA_CONFIG = {
-    "MASTER_KEY": "5Kr44ILO-y9o7-HlZj-X7uV-7yPD45nUWSeU",
-    "PRIVATE_KEY": "live_private_Q86K7oTTYLcvUFVZzxJCiDtFVc1",
-    "PUBLIC_KEY": "live_public_2D7XpkySz8D3asQKdgCifuiIo81",
-    "TOKEN": "uo4N9wTN6Bzsnggusypb",
-    "MODE": "live"  # "live" en production
-}
 
 # settings.py
 SWAGGER_SETTINGS = {
@@ -114,9 +106,13 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
 
 CORS_ALLOW_CREDENTIALS = True
 
+
+CRONJOBS = [
+    ('0 0 * * *', 'core.management.commands.check_subscriptions.Command')
+]
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # Doit être placé en haut
-
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -124,7 +120,22 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
 ]
+
+import os 
+# FedaPay Integration Settings
+FEDAPAY_API_KEY = os.environ.get('FEDAPAY_API_KEY', 'sk_live_MJEzWZdojy2AMNx-Y_x2j558')  # Votre clé API FedaPay
+FEDAPAY_API_URL = os.environ.get('FEDAPAY_API_URL', 'https://api.fedapay.com/v1/transactions')
+FEDAPAY_CALLBACK_URL = os.environ.get('FEDAPAY_CALLBACK_URL', 'https://iaparibot.pro/payment/webhook/')
+FEDAPAY_REDIRECT_URL = os.environ.get('FEDAPAY_REDIRECT_URL', 'https://iaparibot.pro/payment/success/')
+FEDAPAY_WEBHOOK_SECRET = os.environ.get('FEDAPAY_WEBHOOK_SECRET', 'wh_live_JTJpkywKIARSicwWeTa1Af2d')  # Secret de webhook si disponible
+
+# URL du frontend pour les liens dans les emails
+FRONTEND_URL = 'http://localhost:8000'  # Remplacez par l'URL de votre frontend React
+
+# Email de l'expéditeur par défaut
+DEFAULT_FROM_EMAIL = 'no-reply@iaparibot.pro'
 
 ROOT_URLCONF = 'project.urls'
 
@@ -146,14 +157,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'project.wsgi.application'
 
+import os
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "app_static"),
+]
+
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
 

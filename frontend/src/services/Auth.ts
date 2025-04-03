@@ -84,7 +84,7 @@ export class AuthService {
               return Promise.reject(error);
             }
             
-            const response = await axios.post(`${this.API_URL}/token/refresh/`, {
+            const response = await axios.post(`${this.API_URL}/auth/token/refresh/`, {
               refresh: refreshToken
             });
             
@@ -132,7 +132,7 @@ export class AuthService {
   // Auth API methods
   public async login(credentials: LoginCredentials): Promise<AuthResponse> {
     try {
-      const response: AxiosResponse<AuthResponse> = await this.apiClient.post('/login/', {
+      const response: AxiosResponse<AuthResponse> = await this.apiClient.post('/auth/login/', {
         email: credentials.email,
         password: credentials.password
       });
@@ -151,7 +151,7 @@ export class AuthService {
 
   public async register(userData: RegisterData): Promise<AuthResponse> {
     try {
-      const response: AxiosResponse<AuthResponse> = await this.apiClient.post('/register/', userData);
+      const response: AxiosResponse<AuthResponse> = await this.apiClient.post('api/auth/register/', userData);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -163,7 +163,7 @@ export class AuthService {
 
   public async verifyEmail(token: string): Promise<void> {
     try {
-      await this.apiClient.get(`/api/users/verify-email/?token=${token}`);
+      await this.apiClient.get(`api/auth/verify-email/?token=${token}`);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         throw error.response.data as AuthError;
@@ -174,7 +174,7 @@ export class AuthService {
 
   public async getProfile(): Promise<User> {
     try {
-      const response: AxiosResponse<User> = await this.apiClient.get('/api/users/profile/');
+      const response: AxiosResponse<User> = await this.apiClient.get('/users/profile/');
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -186,7 +186,7 @@ export class AuthService {
 
   public async updateProfile(profileData: Partial<User>): Promise<User> {
     try {
-      const response: AxiosResponse<User> = await this.apiClient.put('/api/users/profile/', profileData);
+      const response: AxiosResponse<User> = await this.apiClient.put('/users/profile/', profileData);
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
@@ -198,7 +198,7 @@ export class AuthService {
 
   public async requestPasswordReset(email: string): Promise<void> {
     try {
-      await this.apiClient.post('/api/users/reset-password/', { email });
+      await this.apiClient.post('/users/reset-password/', { email });
     } catch (error) {
       if (axios.isAxiosError(error) && error.response) {
         throw error.response.data as AuthError;
@@ -209,7 +209,7 @@ export class AuthService {
 
   public async resetPassword(token: string, password: string, confirmPassword: string): Promise<void> {
     try {
-      await this.apiClient.post('/api/users/reset-password/confirm/', {
+      await this.apiClient.post('/users/reset-password/confirm/', {
         token,
         password,
         password_confirm: confirmPassword
@@ -244,7 +244,7 @@ export const refreshToken = async (): Promise<void> => {
   }
   
   try {
-    const response = await axios.post(`${authService.API_URL}/token/refresh/`, {
+    const response = await axios.post(`${authService.API_URL}/auth/token/refresh/`, {
       refresh: refreshToken
     });
     

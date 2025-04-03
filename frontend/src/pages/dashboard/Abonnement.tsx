@@ -1,199 +1,149 @@
-import React, { useState, useEffect } from 'react';
-import {
-  getUserSubscriptions,
-  getSubscriptionPlans,
-  createSubscription,
-  cancelSubscription,
-  changeSubscriptionPlan,
-  renewSubscription
-} from '../../services/manageSubscribe';
+// src/pages/SubscriptionPage.tsx
+import { useEffect, useState } from 'react';
+import ManageSubscribe from '../../services/ManageSubscribe';
+import MainLayout from '../../layouts/DashboardLayout';
+import { SubscriptionPlan, UserSubscription } from '../../services/ManageSubscribe';
 
-// Define interfaces based on the existing service
-interface Subscription {
-  id: number;
-  user: number;
-  plan: number;
-  status: string;
-  start_date: string;
-  end_date: string;
-}
-
-interface SubscriptionPlan {
-  id: number;
-  name: string;
-  price: string;
-  description: string;
-  duration_in_days: number;
-  features: Record<string, any>;
-}
-
-const SubscriptionPage: React.FC = () => {
-  // State management
-  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
-  const [userSubscriptions, setUserSubscriptions] = useState<Subscription[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+const SubscriptionPage = () => {
+  const [currentSub, setCurrentSub] = useState<UserSubscription | null>(null);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan | null>(null);
 
-  // Fetch subscription data on component mount
+  // Charger les données initiales
   useEffect(() => {
-    const fetchSubscriptionData = async () => {
+    const loadData = async () => {
       try {
-        // Fetch subscription plans
-        const plans = await getSubscriptionPlans();
-        setSubscriptionPlans(plans);
+        const [subResponse, plansResponse] = await Promise.all([
+          ManageSubscribe.getCurrentSubscription(),
+          ManageSubscribe.getPlans()
+        ]);
 
-        // Fetch user's current subscriptions
-        const subscriptions = await getUserSubscriptions();
-        setUserSubscriptions(subscriptions);
+        if (subResponse.success) {
+          setCurrentSub(subResponse.data);
+        }
 
-        setLoading(false);
+        if (plansResponse.success) {
+          setPlans(plansResponse.data);
+        }
       } catch (err) {
-        setError('Impossible de charger les données d\'abonnement');
+        setError('Erreur lors du chargement des données');
+      } finally {
         setLoading(false);
       }
     };
 
-    fetchSubscriptionData();
+    loadData();
   }, []);
 
-  // Handler for creating a new subscription
-  const handleCreateSubscription = async (planId: number) => {
+  const handleSubscribe = async (planId: number) => {
     try {
-      setLoading(true);
-      const newSubscription = await createSubscription(planId);
-      setUserSubscriptions([...userSubscriptions, newSubscription]);
-      setLoading(false);
+      const response = await ManageSubscribe.createSubscription(planId);
+      if (response.success && response.data.payment_url) {
+        window.location.href = response.data.payment_url;
+      }
     } catch (err) {
-      setError('Échec de la création de l\'abonnement');
-      setLoading(false);
+      setError('Erreur lors de la création de l\'abonnement');
     }
   };
 
-  // Handler for canceling a subscription
-  const handleCancelSubscription = async (subscriptionId: number) => {
-    try {
-      setLoading(true);
-      await cancelSubscription(subscriptionId);
-      setUserSubscriptions(
-        userSubscriptions.filter(sub => sub.id !== subscriptionId)
-      );
-      setLoading(false);
-    } catch (err) {
-      setError('Impossible d\'annuler l\'abonnement');
-      setLoading(false);
-    }
-  };
-
-  // Handler for changing subscription plan
-  const handleChangePlan = async (subscriptionId: number, newPlanId: number) => {
-    try {
-      setLoading(true);
-      const updatedSubscription = await changeSubscriptionPlan(subscriptionId, newPlanId);
-      setUserSubscriptions(
-        userSubscriptions.map(sub => 
-          sub.id === subscriptionId ? updatedSubscription : sub
-        )
-      );
-      setLoading(false);
-    } catch (err) {
-      setError('Impossible de changer de plan');
-      setLoading(false);
-    }
-  };
-
-  // Handler for renewing a subscription
-  const handleRenewSubscription = async (subscriptionId: number) => {
-    try {
-      setLoading(true);
-      const renewedSubscription = await renewSubscription(subscriptionId);
-      setUserSubscriptions(
-        userSubscriptions.map(sub => 
-          sub.id === subscriptionId ? renewedSubscription : sub
-        )
-      );
-      setLoading(false);
-    } catch (err) {
-      setError('Impossible de renouveler l\'abonnement');
-      setLoading(false);
-    }
-  };
-
-  // Render loading state
   if (loading) {
-    return <div>Chargement des abonnements...</div>;
-  }
-
-  // Render error state
-  if (error) {
-    return <div className="error">{error}</div>;
+    return <MainLayout>Chargement en cours...</MainLayout>;
   }
 
   return (
-    <div className="subscription-page">
-      <h1>Mes Abonnements</h1>
-
-      {/* Subscription Plans Section */}
-      <section className="subscription-plans">
-        <h2>Plans Disponibles</h2>
-        <div className="plans-container">
-          {subscriptionPlans.map(plan => (
-            <div key={plan.id} className="plan-card">
-              <h3>{plan.name}</h3>
-              <p>{plan.description}</p>
-              <p>Prix: {plan.price} XOF</p>
-              <p>Durée: {plan.duration_in_days} jours</p>
-              <ul>
-                {Object.entries(plan.features).map(([feature, value]) => (
-                  <li key={feature}>
-                    {feature}: {value}
-                  </li>
-                ))}
-              </ul>
-              <button 
-                onClick={() => handleCreateSubscription(plan.id)}
-                disabled={loading}
-              >
-                Souscrire
-              </button>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Current Subscriptions Section */}
-      <section className="current-subscriptions">
-        <h2>Mes Abonnements Actuels</h2>
-        {userSubscriptions.length === 0 ? (
-          <p>Vous n'avez pas d'abonnements actifs.</p>
-        ) : (
-          <div className="subscriptions-container">
-            {userSubscriptions.map(subscription => (
-              <div key={subscription.id} className="subscription-card">
-                <h3>Plan #{subscription.plan}</h3>
-                <p>Statut: {subscription.status}</p>
-                <p>Date de début: {new Date(subscription.start_date).toLocaleDateString()}</p>
-                <p>Date de fin: {new Date(subscription.end_date).toLocaleDateString()}</p>
-                <div className="subscription-actions">
-                  <button 
-                    onClick={() => handleRenewSubscription(subscription.id)}
-                    disabled={loading}
-                  >
-                    Renouveler
-                  </button>
-                  <button 
-                    onClick={() => handleCancelSubscription(subscription.id)}
-                    disabled={loading}
-                  >
-                    Annuler
-                  </button>
+    <MainLayout>
+      <div className="container mx-auto px-4 py-8">
+        {/* Section Abonnement actuel */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold mb-4">Votre abonnement actuel</h2>
+          
+          {currentSub ? (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="text-xl font-semibold">
+                    {currentSub.plan.name}
+                  </h3>
+                  <p className="text-gray-600 mt-2">
+                    Statut: {currentSub.status === 'active' ? (
+                      <span className="text-green-600">Actif</span>
+                    ) : (
+                      <span className="text-yellow-600">En attente</span>
+                    )}
+                  </p>
+                  <p className="text-gray-600">
+                    Prix: {currentSub.plan.price}€ / mois
+                  </p>
+                  <p className="text-gray-600">
+                    Renouvellement automatique: {currentSub.auto_renew ? 'Activé' : 'Désactivé'}
+                  </p>
+                  {currentSub.end_date && (
+                    <p className="text-gray-600">
+                      Expiration: {new Date(currentSub.end_date).toLocaleDateString()}
+                    </p>
+                  )}
                 </div>
+                {currentSub.status === 'pending' && (
+                  <button 
+                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                    onClick={() => currentSub && handleSubscribe(currentSub.plan.id)}
+                  >
+                    Payer maintenant
+                  </button>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+              <p className="text-yellow-800">Vous n'avez pas d'abonnement actif</p>
+            </div>
+          )}
+        </div>
+
+        {/* Section Plans disponibles */}
+        <div>
+          <h2 className="text-2xl font-bold mb-6">Plans d'abonnement disponibles</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {plans.filter(plan => plan.is_active).map((plan) => (
+              <div key={plan.id} className="bg-white rounded-lg shadow-md p-6">
+                <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
+                <p className="text-3xl font-bold mb-4">
+                  {plan.price} FCFA <span className="text-sm text-gray-500">/mois</span>
+                </p>
+                <p className="text-gray-600 mb-4">{plan.description}</p>
+                
+                <ul className="mb-6">
+                  {Object.entries(plan.features).map(([feature, value]) => (
+                    <li key={feature} className="flex items-center mb-2">
+                      <svg className="w-4 h-4 mr-2 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                      </svg>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+
+                <button
+                  onClick={() => handleSubscribe(plan.id)}
+                  className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
+                >
+                  Choisir ce plan
+                </button>
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Affichage des erreurs */}
+        {error && (
+          <div className="mt-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
         )}
-      </section>
-    </div>
+      </div>
+    </MainLayout>
   );
 };
 

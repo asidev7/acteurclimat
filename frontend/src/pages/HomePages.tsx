@@ -1,6 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Check, Zap, BarChart2, Shield, ChevronDown, Star, TrendingUp, Clock } from 'react-feather';
+import { getSubscriptionPlans } from '../services/GetSubscription';
+
+interface SubscriptionPlan {
+  id: number;
+  name: string;
+  plan_type: string;
+  price: number;
+  duration_days: number;
+  description: string;
+  features: string[];
+  buttonColor: string;
+  popular: boolean;
+}
 
 const HomePage: React.FC = () => {
   // Animation variants
@@ -9,15 +23,162 @@ const HomePage: React.FC = () => {
     visible: { opacity: 1, y: 0 }
   };
 
+  const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+
+  const faqs = [
+    {
+      question: "Comment fonctionne l'IA de prédiction ?",
+      answer: "Notre intelligence artificielle analyse des milliers de données historiques..."
+    },
+    {
+      question: "Quelle est la précision des prédictions ?",
+      answer: "Notre taux de réussite moyen est de 78% sur les 6 derniers mois..."
+    },
+    {
+      question: "Puis-je essayer gratuitement ?",
+      answer: "Oui, nous offrons un essai gratuit de 7 jours sans engagement..."
+    },
+    {
+      question: "Quels sports sont couverts ?",
+      answer: "Football, Basketball, Tennis et 10 autres sports majeurs..."
+    },
+    {
+      question: "Comment mettre à jour mon abonnement ?",
+      answer: "Vous pouvez modifier votre formule directement depuis votre espace client..."
+    },
+    {
+      question: "Quelle est la fréquence des mises à jour ?",
+      answer: "Les données sont mises à jour en temps réel jusqu'au coup d'envoi..."
+    },
+    {
+      question: "Est-ce légal d'utiliser cette plateforme ?",
+      answer: "Notre service est 100% conforme à la législation en vigueur..."
+    },
+    {
+      question: "Comment contacter le support ?",
+      answer: "Notre équipe est disponible 24h/24 via le chat intégré..."
+    },
+    {
+      question: "Quelles méthodes de paiement acceptez-vous ?",
+      answer: "MTN Mobile Money, Moov, Carte bancaire, PayPal et crypto-monnaies principales..."
+    },
+    {
+      question: "Y a-t-il des frais cachés ?",
+      answer: "Aucun frais supplémentaire n'est appliqué en dehors de l'abonnement..."
+    },
+    {
+      question: "Comment annuler mon abonnement ?",
+      answer: "L'annulation est instantanée depuis votre espace personnel..."
+    },
+    {
+      question: "Les débutants peuvent-ils utiliser la plateforme ?",
+      answer: "Notre interface intuitive est conçue pour tous les niveaux..."
+    },
+    {
+      question: "Quelle différence entre les formules ?",
+      answer: "Les formules varient par le nombre de prédictions et fonctionnalités..."
+    },
+    {
+      question: "Est-ce compatible mobile ?",
+      answer: "Oui, la plateforme est optimisée pour tous les appareils..."
+    },
+    {
+      question: "Comment sont sécurisées mes données ?",
+      answer: "Nous utilisons le chiffrement SSL 256-bit et l'authentification à deux facteurs..."
+    }
+  ];
+
+  useEffect(() => {
+    async function fetchPlans() {
+      const plans = await getSubscriptionPlans();
+      setSubscriptionPlans(plans);
+    }
+
+    fetchPlans();
+
+    // Auto-rotate testimonials
+    const interval = setInterval(() => {
+      setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const testimonials = [
+    {
+      name: "Thomas L.",
+      role: "Parieur professionnel",
+      quote: "Depuis que j'utilise cette plateforme, mon taux de réussite est passé de 52% à 78%. L'IA analyse des aspects que je n'aurais jamais considérés.",
+      avatar: "TL",
+      stats: "+43% de gains"
+    },
+    {
+      name: "Sophie M.",
+      role: "Investisseuse sportive",
+      quote: "La précision des prédictions sur les matchs de Ligue 1 est impressionnante. J'ai triplé mon bankroll en 6 mois grâce aux conseils premium.",
+      avatar: "SM",
+      stats: "3x ROI"
+    },
+    {
+      name: "Marc D.",
+      role: "Analyste sportif",
+      quote: "En tant que professionnel, j'apprécie la profondeur des analyses. Les rapports détaillés m'ont aidé à affiner mes propres modèles prédictifs.",
+      avatar: "MD",
+      stats: "87% de précision"
+    }
+  ];
+
+  const features = [
+    {
+      icon: <Zap className="text-blue-600" size={24} />,
+      title: "Prédictions en temps réel",
+      description: "Mises à jour continues jusqu'au coup d'envoi"
+    },
+    {
+      icon: <BarChart2 className="text-indigo-600" size={24} />,
+      title: "Analyses approfondies",
+      description: "Plus de 500 indicateurs analysés par match"
+    },
+    {
+      icon: <Shield className="text-green-600" size={24} />,
+      title: "Garantie de qualité",
+      description: "Vérification par nos experts sportifs"
+    },
+    {
+      icon: <Clock className="text-purple-600" size={24} />,
+      title: "Historique complet",
+      description: "Accès aux 5 dernières saisons de données"
+    }
+  ];
+
   return (
-    <div className="min-h-screen">
-      {/* Hero Section avec animation */}
-      <section className="relative bg-gradient-to-r from-blue-600 to-indigo-800 text-white py-24 overflow-hidden">
-        {/* Cercles animés en arrière-plan */}
+    <div className="min-h-screen bg-gray-50">
+      <section className="relative bg-gradient-to-br from-blue-900 to-indigo-900 text-white py-16 overflow-hidden">
+        {/* Animation de particules réduite */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -right-10 -top-20 w-64 h-64 bg-blue-400 rounded-full opacity-20"></div>
-          <div className="absolute left-10 bottom-10 w-40 h-40 bg-indigo-300 rounded-full opacity-20"></div>
-          <div className="absolute right-1/4 bottom-1/3 w-32 h-32 bg-purple-400 rounded-full opacity-20"></div>
+          {[...Array(10)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full bg-white opacity-10"
+              initial={{
+                x: Math.random() * 100,
+                y: Math.random() * 100,
+                width: Math.random() * 8 + 4,
+                height: Math.random() * 8 + 4
+              }}
+              animate={{
+                x: Math.random() * 100,
+                y: Math.random() * 100,
+                transition: {
+                  duration: Math.random() * 8 + 8,
+                  repeat: Infinity,
+                  repeatType: "reverse"
+                }
+              }}
+            />
+          ))}
         </div>
         
         <div className="container mx-auto px-4 text-center relative z-10">
@@ -27,11 +188,13 @@ const HomePage: React.FC = () => {
             variants={fadeIn}
             transition={{ duration: 0.6 }}
           >
-            <h1 className="text-5xl md:text-6xl font-extrabold mb-6 leading-tight">
-              Prédictions sportives <span className="text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-400">alimentées par l'IA</span>
+            <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-300 to-cyan-300">
+                L'IA pour vos paris sportifs
+              </span>
             </h1>
-            <p className="text-xl md:text-2xl mb-10 max-w-3xl mx-auto font-light">
-              Maximisez vos gains grâce à notre technologie d'intelligence artificielle avancée qui analyse des milliers de données en temps réel.
+            <p className="text-lg md:text-xl mb-6 max-w-2xl mx-auto font-light text-blue-100">
+              Notre algorithme analyse plus de 10 000 données par match pour des prédictions précises.
             </p>
           </motion.div>
           
@@ -39,460 +202,49 @@ const HomePage: React.FC = () => {
             className="flex flex-col sm:flex-row gap-4 justify-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
           >
             <Link 
-              to="/predictions" 
-              className="bg-white text-blue-700 hover:bg-gray-100 font-bold py-4 px-8 rounded-lg text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+              to="/inscription" 
+              className="relative overflow-hidden group bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 font-bold py-4 px-8 rounded-full text-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
             >
-              Découvrir les prédictions
+              <span className="relative z-10">Essai gratuit 7 jours</span>
+              <span className="absolute inset-0 bg-gradient-to-r from-blue-600 to-cyan-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
             </Link>
             <Link 
-              to="/how-it-works" 
-              className="bg-transparent hover:bg-blue-700 border-2 border-white text-white font-bold py-4 px-8 rounded-lg text-lg transition-all duration-300 hover:shadow-lg"
+              to="/boutique" 
+              className="flex items-center justify-center gap-2 bg-transparent hover:bg-white/10 border-2 border-white text-white font-bold py-4 px-6 rounded-full text-lg transition-all duration-300 hover:shadow-lg"
             >
-              Comment ça marche
+              Connexion
             </Link>
           </motion.div>
           
           <motion.div 
-            className="mt-12"
+            className="mt-8"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
           >
-            <div className="bg-white/10 backdrop-blur-lg p-4 rounded-xl inline-block">
-              <p className="text-lg font-medium">🔥 Déjà <span className="font-bold text-yellow-300">+15 000</span> parieurs satisfaits</p>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Section IA PariBot */}
-      <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-16"
-          >
-            <span className="inline-block py-1 px-3 rounded-full bg-blue-100 text-blue-700 font-semibold text-sm mb-4">INNOVATION</span>
-            <h2 className="text-4xl font-bold mb-6">Notre PariBot IA, votre expert personnel</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Une technologie révolutionnaire qui analyse les statistiques, l'historique des équipes et les conditions actuelles pour générer des prédictions ultra-précises.
-            </p>
-          </motion.div>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8 }}
-            >
-              <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-1 rounded-2xl shadow-lg">
-                <div className="bg-white rounded-2xl p-6 h-full">
-                  <div className="space-y-6">
-                    <div className="flex items-start space-x-4">
-                      <div className="bg-blue-100 p-3 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-lg mb-1">Traitement Big Data</h3>
-                        <p className="text-gray-600">Analyse de + de 10 000 matchs et 500 variables par prédiction</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-4">
-                      <div className="bg-blue-100 p-3 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-lg mb-1">Taux de succès élevé</h3>
-                        <p className="text-gray-600">Précision de 78% sur les grands championnats européens</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-start space-x-4">
-                      <div className="bg-blue-100 p-3 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-lg mb-1">Temps réel</h3>
-                        <p className="text-gray-600">Mise à jour continue des cotes et facteurs d'influence</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-lg p-3 rounded-xl border border-white/20">
+              <div className="flex -space-x-2">
+                {[...Array(3)].map((_, i) => (
+                  <img 
+                    key={i}
+                    src={`https://randomuser.me/api/portraits/${i % 2 === 0 ? 'men' : 'women'}/${i+30}.jpg`}
+                    className="w-8 h-8 rounded-full border-2 border-white"
+                    alt="User"
+                  />
+                ))}
               </div>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative"
-            >
-              <div className="bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl p-6 relative z-10">
-                <div className="bg-white rounded-xl shadow-lg p-4 border border-gray-100">
-                  <div className="flex items-center mb-4">
-                    <div className="h-3 w-3 bg-red-500 rounded-full mr-2"></div>
-                    <div className="h-3 w-3 bg-yellow-500 rounded-full mr-2"></div>
-                    <div className="h-3 w-3 bg-green-500 rounded-full"></div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="bg-blue-50 rounded-lg p-4">
-                      <div className="flex items-center mb-2">
-                        <div className="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold mr-3">P</div>
-                        <div className="text-sm font-medium">PariBot IA</div>
-                      </div>
-                      <p className="text-gray-700">Analyse du match PSG vs. Marseille (Ligue 1) :</p>
-                      <ul className="mt-2 space-y-1 text-sm">
-                        <li className="flex items-center"><span className="text-green-600 mr-2">✓</span> Forme récente: PSG 4 victoires, Marseille 2 défaites</li>
-                        <li className="flex items-center"><span className="text-green-600 mr-2">✓</span> Historique confrontations: 70% victoires PSG</li>
-                        <li className="flex items-center"><span className="text-green-600 mr-2">✓</span> Absences clés: 2 titulaires Marseille</li>
-                      </ul>
-                    </div>
-                    <div className="bg-indigo-50 rounded-lg p-4">
-                      <p className="font-bold text-indigo-800">Prédiction: <span className="text-indigo-600">Victoire PSG (73% probabilité)</span></p>
-                      <div className="mt-2 h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-indigo-600 rounded-full" style={{ width: '73%' }}></div>
-                      </div>
-                      <div className="flex justify-between mt-1 text-xs text-gray-500">
-                        <span>Faible</span>
-                        <span>Élevée</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Éléments décoratifs */}
-              <div className="absolute -bottom-10 -right-10 h-24 w-24 bg-yellow-400 rounded-full opacity-20 z-0"></div>
-              <div className="absolute -top-6 -left-6 h-16 w-16 bg-blue-500 rounded-full opacity-10 z-0"></div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Comment ça marche */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-16"
-          >
-            <span className="inline-block py-1 px-3 rounded-full bg-indigo-100 text-indigo-700 font-semibold text-sm mb-4">PROCESSUS</span>
-            <h2 className="text-4xl font-bold mb-6">Comment fonctionne notre technologie</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Un processus simple et efficace pour vous aider à prendre les meilleures décisions.
-            </p>
-          </motion.div>
-          
-          <div className="relative">
-            {/* Ligne de connexion entre les étapes */}
-            <div className="hidden lg:block absolute top-1/2 left-0 w-full h-1 bg-gray-200 -translate-y-1/2 z-0"></div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 relative z-10">
-              {[
-                {
-                  title: "Collecte des données",
-                  description: "Nos algorithmes collectent des milliers de données sportives en temps réel.",
-                  icon: (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
-                    </svg>
-                  )
-                },
-                {
-                  title: "Analyse IA",
-                  description: "Notre intelligence artificielle traite les informations et identifie les tendances.",
-                  icon: (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  )
-                },
-                {
-                  title: "Validation experts",
-                  description: "Nos experts sportifs vérifient et affinent les prédictions générées.",
-                  icon: (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                  )
-                },
-                {
-                  title: "Recommandations",
-                  description: "Recevez nos meilleures prédictions directement sur votre compte.",
-                  icon: (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                    </svg>
-                  )
-                }
-              ].map((step, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: index * 0.2 }}
-                  className="flex flex-col items-center"
-                >
-                  <div className="bg-gradient-to-br from-blue-600 to-indigo-700 w-16 h-16 rounded-full flex items-center justify-center shadow-lg mb-6">
-                    {step.icon}
-                  </div>
-                  <div className="bg-white rounded-xl shadow-md p-6 text-center h-full w-full">
-                    <h3 className="text-xl font-bold mb-3">{step.title}</h3>
-                    <p className="text-gray-600">{step.description}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-
-       {/* CTA */}
-      <section className="py-16 bg-gradient-to-r from-blue-800 to-indigo-900 text-white">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Prêt à optimiser vos paris sportifs ?</h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-            Rejoignez notre communauté de parieurs et commencez à utiliser l'analyse de données pour améliorer vos résultats.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/signup"
-              className="bg-white text-blue-800 hover:bg-blue-100 py-3 px-8 rounded-lg font-bold transition-colors"
-            >
-              Créer un compte
-            </Link>
-            <Link
-              to="/predictions"
-              className="bg-transparent border-2 border-white text-white hover:bg-white/10 py-3 px-8 rounded-lg font-bold transition-colors"
-            >
-              Voir les prédictions du jour
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Témoignages */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-16"
-          >
-            <span className="inline-block py-1 px-3 rounded-full bg-green-100 text-green-700 font-semibold text-sm mb-4">TÉMOIGNAGES</span>
-            <h2 className="text-4xl font-bold mb-6">Ce que disent nos utilisateurs</h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Découvrez pourquoi des milliers de parieurs font confiance à notre plateforme.
-            </p>
-          </motion.div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                name: "Thomas L.",
-                role: "Parieur depuis 2 ans",
-                quote: "Grâce à PariBot, j'ai augmenté mes gains de 43% en seulement 3 mois. Les prédictions sont vraiment fiables !",
-                avatar: "M"
-              },
-              {
-                name: "Sophie M.",
-                role: "Utilisatrice premium",
-                quote: "J'avais essayé d'autres services de prédictions sans succès. Votre technologie IA fait vraiment la différence.",
-                avatar: "S"
-              },
-              {
-                name: "Marc D.",
-                role: "Membre depuis 6 mois",
-                quote: "L'interface est intuitive et les analyses détaillées m'aident à comprendre les prédictions. Je recommande !",
-                avatar: "J"
-              }
-            ].map((testimonial, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.2 }}
-                className="bg-white border border-gray-100 rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow duration-300"
-              >
-                <div className="flex items-center mb-4">
-                  <div className="h-12 w-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg mr-4">
-                    {testimonial.avatar}
-                  </div>
-                  <div>
-                    <h4 className="font-bold">{testimonial.name}</h4>
-                    <p className="text-gray-500 text-sm">{testimonial.role}</p>
-                  </div>
-                </div>
-                <p className="text-gray-600 italic">"{testimonial.quote}"</p>
-                <div className="mt-4 flex">
+              <div className="text-left text-sm">
+                <p><span className="font-bold text-yellow-300">15 000+</span> membres</p>
+                <div className="flex items-center">
                   {[...Array(5)].map((_, i) => (
-                    <svg key={i} xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <svg key={i} xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-yellow-300" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                   ))}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Statistiques */}
-      <section className="py-16 bg-gradient-to-r from-indigo-600 to-blue-600 text-white">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            {[
-              { value: "97%", label: "Satisfaction client" },
-              { value: "30K+", label: "Prédictions générées" },
-              { value: "78%", label: "Précision moyenne" },
-              { value: "15K+", label: "Utilisateurs actifs" }
-            ].map((stat, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <h3 className="text-4xl font-bold mb-2">{stat.value}</h3>
-                <p className="text-indigo-200">{stat.label}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      
-
-
-      {/* Section: FAQ */}
-      <section className="py-16 bg-gray-50">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <h2 className="text-3xl font-bold text-center mb-12">Questions fréquentes</h2>
-          
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="text-xl font-semibold mb-2">Comment sont calculées vos prédictions ?</h3>
-              <p className="text-gray-600">
-                Nos prédictions sont basées sur un algorithme d'IA avancé qui analyse des milliers de données historiques, 
-                les statistiques récentes des équipes, les confrontations directes, et de nombreux autres facteurs comme 
-                les blessures, suspensions et conditions météorologiques.
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="text-xl font-semibold mb-2">Puis-je annuler mon abonnement à tout moment ?</h3>
-              <p className="text-gray-600">
-                Oui, vous pouvez annuler votre abonnement à tout moment depuis votre espace membre. 
-                Vous continuerez à bénéficier de votre abonnement jusqu'à la fin de la période en cours.
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="text-xl font-semibold mb-2">Quel est le taux de réussite de vos prédictions ?</h3>
-              <p className="text-gray-600">
-                Notre taux de réussite moyen se situe entre 65% et 75% selon les compétitions. 
-                Vous pouvez consulter nos statistiques détaillées et notre historique de performance 
-                directement sur la plateforme.
-              </p>
-            </div>
-            
-            <div className="bg-white rounded-lg p-6 shadow-sm">
-              <h3 className="text-xl font-semibold mb-2">Est-ce que je peux tester avant de m'abonner ?</h3>
-              <p className="text-gray-600">
-                Oui, nous offrons un essai gratuit de 7 jours pour tous les nouveaux utilisateurs, 
-                vous permettant d'explorer toutes les fonctionnalités de notre plateforme avant de vous engager.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section améliorée */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8 }}
-          >
-            <h2 className="text-4xl font-bold mb-6">Prêt à révolutionner vos paris sportifs ?</h2>
-            <p className="text-xl text-gray-600 mb-10 max-w-2xl mx-auto">
-              Rejoignez des milliers d'utilisateurs qui améliorent leurs résultats grâce à nos prédictions basées sur l'IA.
-            </p>
-            
-            <div className="bg-white rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                <div className="text-left">
-                  <h3 className="text-2xl font-bold mb-4">Créez votre compte gratuitement</h3>
-                  <ul className="space-y-3 mb-6">
-                    {[
-                      "Accès à 3 prédictions gratuites par semaine",
-                      "Analyses détaillées des matchs majeurs",
-                      "Notifications pour les matchs à fort potentiel"
-                    ].map((feature, index) => (
-                      <li key={index} className="flex items-center">
-                        <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-green-100 text-green-600 mr-3">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
-                        </span>
-                        <span className="text-gray-700">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                
-                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-6 rounded-xl">
-                  <form className="space-y-4">
-                    <div>
-                      <input 
-                        type="email" 
-                        placeholder="Votre email" 
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" 
-                      />
-                    </div>
-                    <div>
-                      <input 
-                        type="password" 
-                        placeholder="Créez un mot de passe" 
-                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-300" 
-                      />
-                    </div>
-                    <button 
-                      type="submit" 
-                      className="w-full bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition-all duration-300 hover:shadow-lg hover:from-blue-700 hover:to-indigo-800 transform hover:-translate-y-1"
-                    >
-                      Créer mon compte
-                    </button>
-                    <p className="text-xs text-gray-500 mt-2">
-                      En vous inscrivant, vous acceptez nos conditions d'utilisation et politique de confidentialité.
-                    </p>
-                  </form>
+                  <span className="text-xs ml-1">4.9/5</span>
                 </div>
               </div>
             </div>
@@ -500,6 +252,504 @@ const HomePage: React.FC = () => {
         </div>
       </section>
 
+      {/* Section marques partenaires */}
+      <section className="py-16 bg-gray-100">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-12"
+          >
+            <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">
+              Partenariats officiels
+            </h3>
+            <h2 className="text-3xl font-bold text-gray-900">Ils nous font confiance</h2>
+          </motion.div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 items-center">
+            {[
+              {
+                name: "Betclic",
+                url: "https://upload.wikimedia.org/wikipedia/commons/f/fe/Logo_Betclic_2019.svg",
+                alt: "Logo Betclic"
+              },
+              {
+                name: "Winamax",
+                url: "https://upload.wikimedia.org/wikipedia/commons/3/31/Logo_winamax_1080x1080px.png",
+                alt: "Logo Winamax"
+              },
+              {
+                name: "Unibet",
+                url: "https://upload.wikimedia.org/wikipedia/commons/2/24/Unibet-Logo-white.jpg",
+                alt: "Logo Unibet"
+              },
+              {
+                name: "1xbet",
+                url: "https://logodownload.org/wp-content/uploads/2023/03/1xbet-logo-0.png",
+                alt: "Logo 1xbet"
+              },
+              {
+                name: "Bet365",
+                url: "https://upload.wikimedia.org/wikipedia/commons/d/dc/Bet365_Logo.svg",
+                alt: "Logo Bet365"
+              },
+            ].map((brand, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.9 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ 
+                  delay: index * 0.1, 
+                  duration: 0.5,
+                  type: "spring",
+                  stiffness: 100
+                }}
+                className="flex justify-center"
+              >
+                <div className="relative group">
+                  <img 
+                    src={brand.url}
+                    alt={brand.alt}
+                    className="h-12 object-contain grayscale opacity-80 group-hover:opacity-100 group-hover:grayscale-0 transition-all duration-300"
+                    loading="lazy"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg"></div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.5, duration: 0.8 }}
+            className="text-center mt-12"
+          >
+            <small className="text-gray-500 text-sm max-w-2xl mx-auto">
+              Ces partenariats nous permettent d'intégrer directement les cotes officielles et d'offrir 
+              une expérience de pari optimale à nos utilisateurs.
+            </small>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Section Avantages améliorée */}
+      <section className="py-20 bg-gradient-to-b from-blue-50 to-indigo-50">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
+                className="group bg-white rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 p-8 relative overflow-hidden"
+              >
+                {/* Fond décoratif */}
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                
+                {/* Icône personnalisée */}
+                <div className="mb-6 relative">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center transform group-hover:-rotate-12 transition-transform">
+                    {index === 0 && (
+                      <div className="text-white p-2">
+                        <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor">
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth="2" 
+                            d="M13 10V3L4 14h7v7l9-11h-7z"
+                            className="text-white"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                    
+                    {index === 1 && (
+                      <div className="text-white p-2">
+                        <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor">
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth="2" 
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" 
+                          />
+                        </svg>
+                      </div>
+                    )}
+                    
+                    {index === 2 && (
+                      <div className="text-white p-2">
+                        <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor">
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth="2" 
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" 
+                          />
+                        </svg>
+                      </div>
+                    )}
+                    
+                    {index === 3 && (
+                      <div className="text-white p-2">
+                        <svg viewBox="0 0 24 24" className="w-8 h-8" fill="none" stroke="currentColor">
+                          <path 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round" 
+                            strokeWidth="2" 
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" 
+                          />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <h3 className="text-2xl font-bold text-gray-800 mb-3">{feature.title}</h3>
+                <p className="text-gray-600 leading-relaxed">{feature.description}</p>
+                
+                {/* Ligne décorative */}
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Section Statistiques impressionnantes */}
+      <section className="py-20 bg-gradient-to-r from-indigo-700 to-blue-800 text-white">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="text-center"
+            >
+              <div className="text-5xl font-bold mb-3">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-300 to-blue-300">78%</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Taux de réussite</h3>
+              <p className="text-blue-200">
+                Moyenne sur les 6 derniers mois dans les 5 grands championnats européens
+              </p>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="text-center"
+            >
+              <div className="text-5xl font-bold mb-3">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-green-300 to-cyan-300">+2.5M</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Données analysées</h3>
+              <p className="text-blue-200">
+                Statistiques traitées chaque jour par notre algorithme
+              </p>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="text-center"
+            >
+              <div className="text-5xl font-bold mb-3">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-300 to-pink-300">94%</span>
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Satisfaction clients</h3>
+              <p className="text-blue-200">
+                Des utilisateurs qui renouvellent leur abonnement chaque mois
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+{/* Section Abonnements - Mise à jour avec le nouveau format */}
+<section className="py-20 bg-white">
+  <div className="container mx-auto px-4">
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.8 }}
+      className="text-center mb-16"
+    >
+      <span className="inline-block py-1 px-3 rounded-full bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-700 font-semibold text-sm mb-4">
+        ABONNEMENTS
+      </span>
+      <h2 className="text-4xl font-bold mb-6">Choisissez votre formule</h2>
+      <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+        Sélectionnez l'offre qui correspond à vos besoins et commencez à gagner dès aujourd'hui.
+      </p>
+    </motion.div>
+    
+    {subscriptionPlans.length > 0 ? (
+      <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        {subscriptionPlans.map((plan, index) => (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: index * 0.1, duration: 0.5 }}
+            className={`flex flex-col rounded-xl overflow-hidden shadow-lg border transition-all duration-300 hover:shadow-xl ${
+              plan.popular
+                ? 'transform md:-translate-y-4 border-indigo-500 ring-2 ring-indigo-500 ring-opacity-50'
+                : 'border-gray-200'
+            }`}
+          >
+            {plan.popular && (
+              <div className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white text-center py-2 font-medium">
+                Le plus populaire
+              </div>
+            )}
+            <div className="p-8 flex-grow">
+              <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+              <div className="mb-6">
+                <span className="text-4xl font-bold">{plan.price} FCFA</span>
+                <span className="text-gray-500"> /mois</span>
+              </div>
+              <ul className="mb-8 space-y-3">
+                {plan.features && typeof plan.features === 'object' ? (
+                  // Si features est un objet (et non un tableau)
+                  Object.entries(plan.features).map(([key, value], fIndex) => {
+                    // Pour les valeurs booléennes, afficher "Oui" pour true
+                    const displayValue = value === true ? "Oui" : value === false ? "Non" : value;
+                    
+                    // Formatage du nom de la fonctionnalité
+                    const featureName = key
+                      .split('_')
+                      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                      .join(' ');
+                    
+                    return (
+                      <li key={fIndex} className="flex items-start">
+                        <Check className="text-green-500 mr-2 mt-0.5 flex-shrink-0" size={18} />
+                        <span className="text-gray-600">
+                          <span className="font-medium">{featureName}:</span> {displayValue}
+                        </span>
+                      </li>
+                    );
+                  })
+                ) : Array.isArray(plan.features) ? (
+                  // Si features est un tableau (pour rétrocompatibilité)
+                  plan.features.map((feature, fIndex) => (
+                    <li key={fIndex} className="flex items-start">
+                      <Check className="text-green-500 mr-2 mt-0.5 flex-shrink-0" size={18} />
+                      <span className="text-gray-600">{feature}</span>
+                    </li>
+                  ))
+                ) : (
+                  // Fallback si features n'est ni un objet ni un tableau
+                  <li className="flex items-start">
+                    <Check className="text-green-500 mr-2 mt-0.5 flex-shrink-0" size={18} />
+                    <span className="text-gray-600">Fonctionnalités incluses</span>
+                  </li>
+                )}
+              </ul>
+            </div>
+            <div className="px-8 pb-8">
+              <Link
+                to="/inscription"
+                className={`block text-center py-3 px-4 rounded-lg font-bold transition-colors ${
+                  plan.popular 
+                    ? 'bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:from-indigo-700 hover:to-blue-700'
+                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                }`}
+              >
+                {plan.popular ? 'Commencer maintenant' : 'Choisir cette offre'}
+              </Link>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    ) : (
+      <div className="text-center py-12">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+        <p>Chargement des offres...</p>
+      </div>
+    )}
+    
+    <motion.div
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+      transition={{ delay: 0.3, duration: 0.6 }}
+      className="text-center mt-12 text-gray-500"
+    >
+      <p>Essai gratuit de 7 jours sans engagement. Annulation possible à tout moment.</p>
+    </motion.div>
+  </div>
+</section>
+
+
+      {/* Section Témoignages simplifiée */}
+<section className="py-20 bg-gray-50">
+  <div className="container mx-auto px-4">
+    <motion.div
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      transition={{ duration: 0.8 }}
+      className="text-center mb-12"
+    >
+      <h2 className="text-4xl font-bold text-gray-800 mb-4">
+        Ils partagent leur expérience
+      </h2>
+      <p className="text-gray-600 max-w-2xl mx-auto">
+        Découvrez ce que nos utilisateurs disent de nous
+      </p>
+    </motion.div>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {testimonials.map((testimonial, index) => (
+        <motion.div
+          key={index}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ delay: index * 0.2 }}
+          className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow"
+        >
+          <div className="flex items-center mb-4">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+              <span className="text-blue-600 font-medium text-xl">
+                {testimonial.name.charAt(0)}
+              </span>
+            </div>
+            <div>
+              <h4 className="font-bold text-gray-800">{testimonial.name}</h4>
+              <p className="text-sm text-gray-500">{testimonial.role}</p>
+            </div>
+          </div>
+
+          <div className="flex mb-4">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`w-5 h-5 ${i < 4 ? 'text-yellow-400' : 'text-gray-300'} fill-current`}
+              />
+            ))}
+          </div>
+
+          <blockquote className="text-gray-600 mb-6">
+            "{testimonial.quote}"
+          </blockquote>
+
+          <div className="flex items-center text-blue-600 font-medium">
+            <TrendingUp className="w-5 h-5 mr-2" />
+            <span>{testimonial.stats}</span>
+          </div>
+        </motion.div>
+      ))}
+    </div>
+
+    <div className="flex justify-center mt-8 space-x-2">
+      {testimonials.map((_, i) => (
+        <button
+          key={i}
+          onClick={() => setActiveTestimonial(i)}
+          className={`w-3 h-3 rounded-full transition-colors ${i === activeTestimonial ? 'bg-blue-600' : 'bg-gray-300'}`}
+        />
+      ))}
+    </div>
+  </div>
+      </section>
+      
+
+      {/* Section CTA finale */}
+      <section className="py-20 bg-gradient-to-br from-blue-900 to-indigo-900 text-white">
+        <div className="container mx-auto px-4 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">
+              Prêt à révolutionner votre expérience des paris sportifs ?
+            </h2>
+            <p className="text-xl text-blue-200 mb-8 max-w-3xl mx-auto">
+              Rejoignez notre communauté et bénéficiez dès aujourd'hui de la puissance de l'IA appliquée aux paris sportifs.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Link
+                to="/inscription"
+                className="bg-white text-blue-800 hover:bg-blue-100 py-4 px-10 rounded-full font-bold text-lg transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+              >
+                Essai gratuit 7 jours
+              </Link>
+              <Link
+                to="/contact"
+                className="bg-transparent border-2 border-white hover:bg-white/10 py-4 px-10 rounded-full font-bold text-lg transition-colors"
+              >
+                Nous contacter
+              </Link>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Section FAQ Étoffée */}
+<section className="py-20 bg-gray-50">
+  <div className="container mx-auto px-4 max-w-6xl">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      className="text-center mb-16"
+    >
+      <h2 className="text-4xl font-bold text-gray-800 mb-4">Questions Fréquentes</h2>
+      <p className="text-gray-600 max-w-3xl mx-auto">Trouvez les réponses aux questions les plus posées</p>
+    </motion.div>
+
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {faqs.map((faq, index) => (
+        <motion.div
+          key={index}
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ delay: index * 0.1 }}
+          className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+        >
+          <button
+            onClick={() => setActiveFaq(activeFaq === index ? null : index)}
+            className="w-full p-6 text-left flex justify-between items-center"
+          >
+            <h3 className="text-lg font-semibold text-gray-800 pr-4">{faq.question}</h3>
+            <ChevronDown className={`transform transition-transform duration-300 ${
+              activeFaq === index ? 'rotate-180' : ''
+            } text-blue-600 w-5 h-5`} />
+          </button>
+
+          <AnimatePresence>
+            {activeFaq === index && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="px-6 pb-6 pt-2 border-t border-gray-100">
+                  <p className="text-gray-600 leading-relaxed">{faq.answer}</p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+      ))}
+    </div>
+  </div>
+</section>
     </div>
   );
 };

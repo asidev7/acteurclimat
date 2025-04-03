@@ -1,33 +1,44 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
-    name: '',
+    first_name: '',
+    last_name: '',
     email: '',
-    subject: '',
+    phone: '',
     message: ''
   });
   const [submitted, setSubmitted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevState => ({
+    setFormData((prevState) => ({
       ...prevState,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Simuler l'envoi du formulaire
-    setTimeout(() => {
-      setSubmitted(true);
-      setFormData({ name: '', email: '', subject: '', message: '' });
-    }, 1000);
+    
+    const apiUrl = 'http://127.0.0.1:8000/contact/';
+
+    axios.post(apiUrl, formData)
+      .then((response) => {
+        if (response.status === 200) {
+          setSubmitted(true);
+          setFormData({ first_name: '', last_name: '', email: '', phone: '', message: '' });
+          setErrorMessage('');  // Reset error message after success
+        }
+      })
+      .catch((error) => {
+        setErrorMessage('Une erreur est survenue. Veuillez réessayer plus tard.');
+      });
   };
 
-  // Quelques canaux de contact principaux
   const contactChannels = [
     {
       name: "Email",
@@ -36,17 +47,11 @@ const ContactPage = () => {
       link: "mailto:contact@iaparibot.com",
     },
     {
-      name: "WhatsApp",
-      icon: "📱",
-      color: "bg-green-500",
-      link: "https://wa.me/22501234567",
-    },
-    {
       name: "Telegram",
       icon: "📨",
       color: "bg-blue-500",
       link: "https://t.me/iaparibot",
-    }
+    },
   ];
 
   return (
@@ -87,16 +92,35 @@ const ContactPage = () => {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit}>
+                  {errorMessage && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-4">
+                      <p>{errorMessage}</p>
+                    </div>
+                  )}
                   <div className="mb-4">
-                    <label htmlFor="name" className="block text-gray-700 mb-2">Nom complet</label>
+                    <label htmlFor="first_name" className="block text-gray-700 mb-2">Prénom</label>
                     <input
                       type="text"
-                      id="name"
-                      name="name"
-                      value={formData.name}
+                      id="first_name"
+                      name="first_name"
+                      value={formData.first_name}
                       onChange={handleChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                      placeholder="Votre nom"
+                      placeholder="Votre prénom"
+                      required
+                    />
+                  </div>
+
+                  <div className="mb-4">
+                    <label htmlFor="last_name" className="block text-gray-700 mb-2">Nom de famille</label>
+                    <input
+                      type="text"
+                      id="last_name"
+                      name="last_name"
+                      value={formData.last_name}
+                      onChange={handleChange}
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                      placeholder="Votre nom de famille"
                       required
                     />
                   </div>
@@ -114,17 +138,17 @@ const ContactPage = () => {
                       required
                     />
                   </div>
-                  
+
                   <div className="mb-4">
-                    <label htmlFor="subject" className="block text-gray-700 mb-2">Sujet</label>
+                    <label htmlFor="phone" className="block text-gray-700 mb-2">Téléphone</label>
                     <input
-                      type="text"
-                      id="subject"
-                      name="subject"
-                      value={formData.subject}
+                      type="tel"
+                      id="phone"
+                      name="phone"
+                      value={formData.phone}
                       onChange={handleChange}
                       className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                      placeholder="Le sujet de votre message"
+                      placeholder="+22990909090"
                       required
                     />
                   </div>
@@ -196,18 +220,9 @@ const ContactPage = () => {
             </div>
             
             <div className="bg-gray-50 rounded-lg p-5 shadow-sm">
-              <h3 className="text-lg font-semibold mb-2">Comment signaler un problème technique ?</h3>
+              <h3 className="text-lg font-semibold mb-2">Comment puis-je suivre ma demande ?</h3>
               <p className="text-gray-600">
-                Pour les problèmes techniques, utilisez le formulaire de contact en sélectionnant 
-                "Support technique" comme sujet. Incluez des captures d'écran si possible.
-              </p>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg p-5 shadow-sm">
-              <h3 className="text-lg font-semibold mb-2">Proposez-vous un support téléphonique ?</h3>
-              <p className="text-gray-600">
-                Le support téléphonique est disponible exclusivement pour nos abonnés Premium. 
-                Vous pouvez accéder aux numéros de contact depuis votre espace membre.
+                Vous recevrez une confirmation par email avec un numéro de référence pour suivre votre demande.
               </p>
             </div>
           </div>

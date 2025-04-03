@@ -1,448 +1,503 @@
-import React, { useEffect, useState } from "react";
-import { getLeagues, getFixtures } from "../../services/api";
-import { predictMatch } from "../../services/predictor";
-import { FaRobot, FaSpinner, FaTimes, FaChartLine } from "react-icons/fa";
+// fichier: src/pages/dashboard/MatchesPage.tsx
+import React, { useEffect, useState } from 'react';
+import MainLayout from '../../layouts/DashboardLayout';
+import { getCountries, getLeaguesByCountry, getMatches } from '../../services/api';
+import predictionService from '../../services/predictionService';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import CircularProgress from '@mui/material/CircularProgress';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
+import Grid from '@mui/material/Grid';
+import Avatar from '@mui/material/Avatar';
+import Chip from '@mui/material/Chip';
+import Tooltip from '@mui/material/Tooltip';
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import LinearProgress from '@mui/material/LinearProgress';
+import Stack from '@mui/material/Stack';
+import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
+import EqualizerIcon from '@mui/icons-material/Equalizer';
+import ChecklistRtlIcon from '@mui/icons-material/ChecklistRtl';
 
-// Interface pour les résultats de prédiction
-interface MatchPrediction {
-  prediction: string;
-  confidence: number;
-  recommended_bet?: string;
-  score_prediction?: string;
-  both_teams_to_score?: boolean;
-  reasoning: string;
+interface Match {
+  match_id: string;
+  league_id: string;
+  league_name: string;
+  league_logo: string;
+  country_logo: string;
+  match_date: string;
+  match_time: string;
+  match_hometeam_name: string;
+  match_hometeam_score: string;
+  match_awayteam_name: string;
+  match_awayteam_score: string;
+  team_home_badge: string;
+  team_away_badge: string;
+  match_status: string;
 }
 
-const MatchList: React.FC = () => {
-  const [matches, setMatches] = useState<any[]>([]);
-  const [countries, setCountries] = useState<any[]>([]);
-  const [leagues, setLeagues] = useState<any[]>([]);
-  const [analyzing, setAnalyzing] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [leaguesLoading, setLeaguesLoading] = useState(false);
-
-  // État du modal
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentPrediction, setCurrentPrediction] = useState<MatchPrediction | null>(null);
-  const [currentMatch, setCurrentMatch] = useState<any | null>(null);
-  const [detailedAnalysis, setDetailedAnalysis] = useState(false);
-
-  // Dates par défaut
-  const today = new Date().toISOString().split('T')[0];
-  const nextWeek = new Date();
-  nextWeek.setDate(nextWeek.getDate() + 7);
-  const nextWeekFormatted = nextWeek.toISOString().split('T')[0];
-
-  const [filters, setFilters] = useState({
-    from: today,
-    to: nextWeekFormatted,
-    countryId: "",
-    leagueId: "",
-    teamId: "",
-  });
-
-  // Chargement des pays et ligues
-  useEffect(() => {
-    const fetchInitialData = async () => {
-      try {
-        const { getCountries } = await import("../../services/api");
-        const countriesData = await getCountries();
-        setCountries(countriesData);
-
-        setLeaguesLoading(true);
-        const allLeagues = await getLeagues();
-        setLeagues(allLeagues);
-      } catch (error) {
-        console.error("Erreur de chargement initial:", error);
-      } finally {
-        setLeaguesLoading(false);
-      }
-    };
-    fetchInitialData();
-  }, []);
-
-  // Mise à jour des ligues lorsque le pays change
-  useEffect(() => {
-    const updateLeagues = async () => {
-      try {
-        setLeaguesLoading(true);
-        const leaguesData = await getLeagues();
-        
-        const filteredLeagues = filters.countryId 
-          ? leaguesData.filter(league => league.country_id === filters.countryId)
-          : leaguesData;
-        
-        setLeagues(filteredLeagues);
-      } catch (error) {
-        console.error("Erreur de chargement des ligues:", error);
-      } finally {
-        setLeaguesLoading(false);
-      }
-    };
-    
-    if (filters.countryId || filters.countryId === "") {
-      updateLeagues();
-    }
-  }, [filters.countryId]);
-
-  // Récupération des matchs
-  const fetchMatches = async () => {
-    setLoading(true);
-    try {
-      const fixturesData = await getFixtures({
-        from: filters.from,
-        to: filters.to,
-        countryId: filters.countryId || undefined,
-        leagueId: filters.leagueId || undefined,
-        teamId: filters.teamId || undefined,
-      });
-      setMatches(fixturesData);
-    } catch (error) {
-      console.error("Erreur de récupération des matchs:", error);
-      alert("Erreur lors du chargement des matchs");
-    } finally {
-      setLoading(false);
-    }
+interface MatchPrediction {
+  match_id: string;
+  home_team: string;
+  away_team: string;
+  predicted_winner: string | null;
+  win_probabilities: {
+    home: number;
+    draw: number;
+    away: number;
   };
-
-  // Gestion des filtres
-  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFilters((prev) => ({
-      ...prev,
-      [name]: value,
-      ...(name === "countryId" && { leagueId: "" }),
-    }));
+  predicted_score: {
+    home: number;
+    away: number;
   };
+  confidence_level: number;
+  key_factors: string[];
+  detailed_analysis: string;
+}
 
-  // Analyse globale
-  const analyzeAllMatches = async () => {
-    if (matches.length === 0) return;
-    setAnalyzing("all");
-
-    try {
-      const firstMatch = matches[0];
-      const result = await predictMatch(firstMatch.event_key, detailedAnalysis);
-
-      if (result) {
-        setCurrentPrediction(result);
-        setCurrentMatch(firstMatch);
-        setIsModalOpen(true);
-      } else {
-        alert("Erreur lors de l'analyse globale");
-      }
-    } catch (error) {
-      console.error("Erreur d'analyse globale:", error);
-      alert("Erreur lors de l'analyse");
-    } finally {
-      setAnalyzing(null);
-    }
-  };
-
-  // Analyse individuelle
-  const analyzeSingleMatch = async (matchId: string) => {
-    setAnalyzing(matchId);
-
-    try {
-      const matchToAnalyze = matches.find((match) => match.event_key === matchId);
-      if (!matchToAnalyze) {
-        throw new Error("Match non trouvé");
-      }
-
-      const result = await predictMatch(matchId, detailedAnalysis);
-
-      if (result) {
-        setCurrentPrediction(result);
-        setCurrentMatch(matchToAnalyze);
-        setIsModalOpen(true);
-      } else {
-        alert(`Erreur lors de l'analyse du match ${matchId}`);
-      }
-    } catch (error) {
-      console.error("Erreur d'analyse:", error);
-      alert("Erreur lors de l'analyse du match");
-    } finally {
-      setAnalyzing(null);
-    }
-  };
-
-  // Fermer le modal
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setCurrentPrediction(null);
-    setCurrentMatch(null);
-  };
-
-  // Couleur en fonction de la confiance
-  const getConfidenceColor = (confidence: number) => {
-    if (confidence >= 75) return "text-green-600";
-    if (confidence >= 50) return "text-yellow-600";
-    return "text-red-600";
-  };
-
+const TeamLogo: React.FC<{
+  src: string | undefined;
+  alt: string;
+  margin: 'left' | 'right';
+}> = ({ src, alt, margin }) => {
   return (
-    <div className="min-h-screen p-6 bg-gray-100">
-      <h1 className="text-3xl font-bold text-[#2f6eea] mb-6">Analyse de Matchs</h1>
-
-      {/* Filtres */}
-      <div className="bg-white p-4 rounded-xl shadow-lg mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-          <div>
-            <label className="block text-sm mb-1 font-medium">Pays</label>
-            <select
-              name="countryId"
-              value={filters.countryId}
-              onChange={handleFilterChange}
-              className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Tous les pays</option>
-              {countries.map((country) => (
-                <option key={country.country_id} value={country.country_id}>
-                  {country.country_name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1 font-medium">
-              Ligue {leaguesLoading && <FaSpinner className="animate-spin inline ml-2" />}
-            </label>
-            <select
-              name="leagueId"
-              value={filters.leagueId}
-              onChange={handleFilterChange}
-              className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-              disabled={leaguesLoading}
-            >
-              <option value="">Toutes les ligues</option>
-              {leagues.map((league) => (
-                <option key={league.league_key} value={league.league_key}>
-                  {league.league_name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1 font-medium">Du</label>
-            <input
-              type="date"
-              name="from"
-              value={filters.from}
-              onChange={handleFilterChange}
-              className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm mb-1 font-medium">Au</label>
-            <input
-              type="date"
-              name="to"
-              value={filters.to}
-              onChange={handleFilterChange}
-              className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-
-        <div className="flex gap-3 items-center flex-wrap">
-          <button
-            onClick={fetchMatches}
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center disabled:opacity-50"
-          >
-            {loading && <FaSpinner className="animate-spin mr-2" />}
-            {loading ? "Chargement..." : "Afficher les matchs"}
-          </button>
-
-          <button
-            onClick={analyzeAllMatches}
-            disabled={!!analyzing || matches.length === 0}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center disabled:opacity-50"
-          >
-            {analyzing === "all" ? <FaSpinner className="animate-spin mr-2" /> : <FaRobot className="mr-2" />}
-            Analyser tous les matchs
-          </button>
-
-          <div className="flex items-center ml-2">
-            <input
-              type="checkbox"
-              id="detailedAnalysis"
-              checked={detailedAnalysis}
-              onChange={() => setDetailedAnalysis(!detailedAnalysis)}
-              className="mr-2"
-            />
-            <label htmlFor="detailedAnalysis" className="text-sm">Analyse détaillée</label>
-          </div>
-        </div>
-      </div>
-
-      {/* État de chargement */}
-      {loading && (
-        <div className="text-center p-8">
-          <FaSpinner className="animate-spin text-4xl text-blue-600 mb-2" />
-          <p className="text-gray-600">Recherche de matchs en cours...</p>
-        </div>
-      )}
-
-      {/* Liste des matchs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {matches.map((match) => (
-          <div key={match.event_key} className="bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center space-x-2">
-                {match.league_logo && (
-                  <img src={match.league_logo} alt="logo ligue" className="w-6 h-6" />
-                )}
-                <span className="text-sm font-semibold">{match.league_name}</span>
-              </div>
-              <div className="flex items-center space-x-1">
-                {match.country_logo && (
-                  <img src={match.country_logo} alt="drapeau pays" className="w-5 h-5" />
-                )}
-                <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">{match.country_name}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between py-4">
-              <div className="flex items-center space-x-2">
-                <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full">
-                  {match.home_team_logo ? (
-                    <img src={match.home_team_logo} alt="logo domicile" className="w-8 h-8" />
-                  ) : (
-                    <span className="text-xs">{match.event_home_team.substring(0, 2)}</span>
-                  )}
-                </div>
-                <span className="font-medium">{match.event_home_team}</span>
-              </div>
-
-              <div className="text-center">
-                <div className="text-xs text-gray-500">{match.event_time}</div>
-                <div className="font-bold text-lg">VS</div>
-                <div className="text-xs text-gray-500">{match.event_date}</div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <span className="font-medium">{match.event_away_team}</span>
-                <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full">
-                  {match.away_team_logo ? (
-                    <img src={match.away_team_logo} alt="logo extérieur" className="w-8 h-8" />
-                  ) : (
-                    <span className="text-xs">{match.event_away_team.substring(0, 2)}</span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t pt-3">
-              <div className="flex justify-between items-center">
-                <button
-                  onClick={() => analyzeSingleMatch(match.event_key)}
-                  disabled={!!analyzing}
-                  className="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center"
-                >
-                  {analyzing === match.event_key ? (
-                    <FaSpinner className="animate-spin mr-2" />
-                  ) : (
-                    <FaChartLine className="mr-2" />
-                  )}
-                  Analyser
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Modal de prédiction */}
-      {isModalOpen && currentPrediction && currentMatch && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-screen overflow-y-auto">
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-blue-600">Analyse de Match</h2>
-                <button onClick={closeModal} className="text-gray-500 hover:text-gray-800">
-                  <FaTimes size={24} />
-                </button>
-              </div>
-
-              <div className="mb-6">
-                <div className="text-center mb-4">
-                  <div className="text-lg font-semibold mb-1">
-                    {currentMatch.event_home_team} vs {currentMatch.event_away_team}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {currentMatch.league_name} • {currentMatch.event_date} • {currentMatch.event_time}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-sm text-gray-500 mb-1">Prédiction</div>
-                    <div className="text-xl font-bold">{currentPrediction.prediction}</div>
-                  </div>
-
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <div className="text-sm text-gray-500 mb-1">Confiance</div>
-                    <div className={`text-xl font-bold ${getConfidenceColor(currentPrediction.confidence)}`}>
-                      {currentPrediction.confidence}%
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                  {currentPrediction.score_prediction && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <div className="text-sm text-gray-500 mb-1">Score prédit</div>
-                      <div className="text-xl font-bold">{currentPrediction.score_prediction}</div>
-                    </div>
-                  )}
-
-                  {currentPrediction.both_teams_to_score !== undefined && (
-                    <div className="bg-gray-50 p-4 rounded-lg">
-                      <div className="text-sm text-gray-500 mb-1">Les deux équipes marquent</div>
-                      <div className="text-xl font-bold">
-                        {currentPrediction.both_teams_to_score ? "Oui" : "Non"}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mb-2">
-                  <div className="text-lg font-semibold mb-2">Raisonnement</div>
-                  <div className="bg-gray-50 p-4 rounded-lg text-gray-800">
-                    {currentPrediction.reasoning.split("\n").map((paragraph, idx) => (
-                      <p key={idx} className={idx > 0 ? "mt-4" : ""}>
-                        {paragraph}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t pt-4 flex justify-end">
-                <button
-                  onClick={closeModal}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Fermer
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Message quand aucun match */}
-      {!loading && matches.length === 0 && (
-        <div className="text-center p-8 text-gray-500">
-          Aucun match trouvé avec ces critères
-        </div>
-      )}
-    </div>
+    <Avatar
+      src={src}
+      alt={alt}
+      sx={{ 
+        width: 48, 
+        height: 48, 
+        [margin === 'right' ? 'marginRight' : 'marginLeft']: 2,
+        bgcolor: 'white',
+        padding: '4px',
+        border: '1px solid #e0e0e0',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        '&:hover': {
+          transform: 'scale(1.05)',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+        }
+      }}
+      variant="rounded"
+      imgProps={{
+        style: { 
+          objectFit: 'contain',
+          maxWidth: '100%',
+          maxHeight: '100%'
+        },
+        loading: 'lazy',
+        onError: (e: React.SyntheticEvent<HTMLImageElement>) => {
+          e.currentTarget.src = '/placeholder-team.png';
+        }
+      }}
+    />
   );
 };
 
-export default MatchList;
+const MatchesPage: React.FC = () => {
+  const [countries, setCountries] = useState<any[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<string>('6');
+  const [leagues, setLeagues] = useState<any[]>([]);
+  const [selectedLeague, setSelectedLeague] = useState<string>('');
+  const [fromDate, setFromDate] = useState<string>(() => {
+    const date = new Date();
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  });
+  const [toDate, setToDate] = useState<string>(() => {
+    const date = new Date();
+    date.setDate(date.getDate() + 7);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  });
+  const [matches, setMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [matchesLoading, setMatchesLoading] = useState<boolean>(false);
+  const [errorMsg, setErrorMsg] = useState<string>('');
+  const [successAlert, setSuccessAlert] = useState<boolean>(false);
+  const [analyzingMatchId, setAnalyzingMatchId] = useState<string>('');
+  const [selectedPrediction, setSelectedPrediction] = useState<MatchPrediction | null>(null);
+  const [predictionLoading, setPredictionLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchCountries = async () => {
+      try {
+        const data = await getCountries();
+        if (data) setCountries(Array.isArray(data) ? data : []);
+      } catch (error) {
+        setErrorMsg("Impossible de charger la liste des pays.");
+      }
+    };
+    fetchCountries();
+  }, []);
+
+  useEffect(() => {
+    const fetchLeagues = async () => {
+      setLoading(true);
+      try {
+        const data = await getLeaguesByCountry(selectedCountry);
+        if (data) {
+          const leaguesArray = Array.isArray(data) ? data : [];
+          setLeagues(leaguesArray);
+          if (leaguesArray.length > 0) {
+            setSelectedLeague(leaguesArray[0].league_id);
+          }
+        }
+      } catch (error) {
+        setErrorMsg("Impossible de charger les ligues pour ce pays.");
+        setLeagues([]);
+      }
+      setLoading(false);
+    };
+    if (selectedCountry) fetchLeagues();
+  }, [selectedCountry]);
+
+  const fetchMatchesData = async () => {
+    if (!selectedLeague || !fromDate || !toDate) return;
+    
+    setMatchesLoading(true);
+    setErrorMsg('');
+    
+    try {
+      const data = await getMatches(selectedLeague, fromDate, toDate);
+      
+      if (data && Array.isArray(data)) {
+        const processedMatches = data.map(match => ({
+          ...match,
+          team_home_badge: match.team_home_badge || `/team-logos/${match.match_hometeam_id || 'default'}.png`,
+          team_away_badge: match.team_away_badge || `/team-logos/${match.match_awayteam_id || 'default'}.png`,
+        }));
+        setMatches(processedMatches);
+      } else {
+        setMatches([]);
+      }
+    } catch (error) {
+      setErrorMsg('Échec de la récupération des matches.');
+      setMatches([]);
+    }
+    
+    setMatchesLoading(false);
+  };
+
+  const handleAnalyzeMatch = async (matchId: string) => {
+    setAnalyzingMatchId(matchId);
+    setPredictionLoading(true);
+    
+    try {
+      const prediction = await predictionService.predictMatch(matchId);
+      setSelectedPrediction(prediction);
+      setSuccessAlert(true);
+    } catch (error) {
+      setErrorMsg('Échec de l\'analyse prédictive');
+    } finally {
+      setPredictionLoading(false);
+      setAnalyzingMatchId('');
+    }
+  };
+
+  const PredictionModal = () => (
+    <Dialog 
+      open={!!selectedPrediction} 
+      onClose={() => setSelectedPrediction(null)}
+      maxWidth="md"
+      fullWidth
+    >
+      {selectedPrediction && (
+        <>
+          <DialogTitle sx={{ borderBottom: '1px solid #eee', textAlign: 'center' }}>
+            <Stack direction="row" alignItems="center" gap={2} justifyContent="center">
+              <SportsSoccerIcon fontSize="large" color="primary" />
+              <Typography variant="h5">Prédiction du match</Typography>
+            </Stack>
+          </DialogTitle>
+          
+          <DialogContent>
+            {predictionLoading ? (
+              <LinearProgress sx={{ my: 3 }} />
+            ) : (
+              <>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" my={3}>
+                  <TeamLogo 
+                    src={matches.find(m => m.match_id === selectedPrediction.match_id)?.team_home_badge}
+                    alt={selectedPrediction.home_team}
+                    margin="right"
+                  />
+                  
+                  <Typography variant="h4" sx={{ mx: 2 }}>
+                    {selectedPrediction.predicted_score.home} - {selectedPrediction.predicted_score.away}
+                  </Typography>
+                  
+                  <TeamLogo 
+                    src={matches.find(m => m.match_id === selectedPrediction.match_id)?.team_away_badge}
+                    alt={selectedPrediction.away_team}
+                    margin="left"
+                  />
+                </Stack>
+
+                <Card variant="outlined" sx={{ mb: 3, p: 2 }}>
+                  <Stack direction="row" justifyContent="space-around" textAlign="center">
+                    <div>
+                      <Typography variant="body2" color="textSecondary">Victoire Domicile</Typography>
+                      <Typography variant="h4" color="primary">
+                        {Math.round(selectedPrediction.win_probabilities.home)}%
+                      </Typography>
+                    </div>
+                    <div>
+                      <Typography variant="body2" color="textSecondary">Match Nul</Typography>
+                      <Typography variant="h4" color="textSecondary">
+                        {Math.round(selectedPrediction.win_probabilities.draw)}%
+                      </Typography>
+                    </div>
+                    <div>
+                      <Typography variant="body2" color="textSecondary">Victoire Extérieur</Typography>
+                      <Typography variant="h4" color="secondary">
+                        {Math.round(selectedPrediction.win_probabilities.away)}%
+                      </Typography>
+                    </div>
+                  </Stack>
+                </Card>
+
+                <Typography variant="h6" gutterBottom>
+                  <ChecklistRtlIcon color="primary" sx={{ verticalAlign: 'middle', mr: 1 }} />
+                  Facteurs déterminants
+                </Typography>
+                
+                <Stack spacing={1} mb={3}>
+                  {selectedPrediction.key_factors.map((factor, index) => (
+                    <Stack key={index} direction="row" alignItems="center" gap={1}>
+                      <EqualizerIcon fontSize="small" color="action" />
+                      <Typography variant="body1">{factor}</Typography>
+                    </Stack>
+                  ))}
+                </Stack>
+
+                <Typography variant="h6" gutterBottom>
+                  <AnalyticsIcon color="primary" sx={{ verticalAlign: 'middle', mr: 1 }} />
+                  Analyse approfondie
+                </Typography>
+                <Typography variant="body1" paragraph>
+                  {selectedPrediction.detailed_analysis}
+                </Typography>
+              </>
+            )}
+          </DialogContent>
+        </>
+      )}
+    </Dialog>
+  );
+
+  const formatDisplayDate = (dateString: string): string => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric'
+    });
+  };
+
+  return (
+    <MainLayout>
+      <div className="p-6">
+        <Typography variant="h4" className="mb-6">Matches & Résultats</Typography>
+        
+        <Card sx={{ mb: 4, bgcolor: '#f9fafb' }}>
+          <CardContent>
+            <Typography variant="h6" className="mb-4">Filtres</Typography>
+            <Box className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <FormControl fullWidth>
+                <InputLabel>Pays</InputLabel>
+                <Select
+                  value={selectedCountry}
+                  label="Pays"
+                  onChange={(e) => setSelectedCountry(e.target.value)}
+                >
+                  {countries.map((country) => (
+                    <MenuItem key={country.country_id} value={country.country_id}>
+                      {country.country_logo && (
+                        <Avatar 
+                          src={country.country_logo} 
+                          alt={country.country_name}
+                          sx={{ width: 24, height: 24, marginRight: 1 }}
+                        />
+                      )}
+                      {country.country_name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              <FormControl fullWidth>
+                <InputLabel>Ligue</InputLabel>
+                <Select
+                  value={selectedLeague}
+                  label="Ligue"
+                  disabled={loading || leagues.length === 0}
+                  onChange={(e) => setSelectedLeague(e.target.value)}
+                >
+                  {leagues.map((league) => (
+                    <MenuItem key={league.league_id} value={league.league_id}>
+                      {league.league_logo && (
+                        <Avatar 
+                          src={league.league_logo} 
+                          alt={league.league_name}
+                          sx={{ width: 24, height: 24, marginRight: 1 }}
+                        />
+                      )}
+                      {league.league_name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              
+              <TextField
+                label="Date de début"
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                fullWidth
+              />
+              
+              <TextField
+                label="Date de fin"
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                fullWidth
+              />
+              
+              <Button 
+                variant="contained" 
+                color="primary" 
+                onClick={fetchMatchesData}
+                disabled={!selectedLeague}
+                fullWidth
+                sx={{ height: '56px' }}
+              >
+                Appliquer les filtres
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Box className="flex justify-between items-center mb-4">
+          <Typography variant="h6">Résultats des matches</Typography>
+          {matches.length > 0 && (
+            <Typography variant="body2" className="text-gray-500">
+              {matches.length} matches • {formatDisplayDate(fromDate)} au {formatDisplayDate(toDate)}
+            </Typography>
+          )}
+        </Box>
+        
+        {matchesLoading ? (
+          <Box className="flex justify-center my-8">
+            <CircularProgress />
+          </Box>
+        ) : errorMsg ? (
+          <Alert severity="error" sx={{ my: 2 }}>{errorMsg}</Alert>
+        ) : matches.length === 0 ? (
+          <Alert severity="info" sx={{ my: 2 }}>Aucun match trouvé avec ces filtres</Alert>
+        ) : (
+          <div>
+            {Array.from(new Set(matches.map(match => match.match_date))).map(date => (
+              <div key={date} className="mb-6">
+                <Box className="flex items-center mb-2" sx={{ borderLeft: '4px solid #1976d2', paddingLeft: 2 }}>
+                  <Typography variant="subtitle1" className="font-semibold">
+                    {formatDisplayDate(date)}
+                  </Typography>
+                </Box>
+                
+                <Grid container spacing={2}>
+                  {matches.filter(match => match.match_date === date).map((match) => (
+                    <Grid item xs={12} sm={6} key={match.match_id}>
+                      <Card elevation={1} sx={{ transition: 'box-shadow 0.3s', '&:hover': { boxShadow: 3 } }}>
+                        <CardContent>
+                          <Box className="flex items-center justify-between mb-2">
+                            <Box className="flex items-center">
+                              {match.country_logo && (
+                                <Avatar src={match.country_logo} alt="Pays" sx={{ width: 20, height: 20, mr: 1 }} />
+                              )}
+                              <Typography variant="caption" className="text-gray-500">
+                                {match.league_name} • {match.match_time}
+                              </Typography>
+                            </Box>
+                            <Chip
+                              label={match.match_status === 'Finished' ? 'Terminé' : 'À venir'}
+                              size="small"
+                              color={match.match_status === 'Finished' ? 'success' : 'primary'}
+                            />
+                          </Box>
+                          
+                          <Box className="flex items-center justify-between mt-4">
+                            <Box className="flex items-center w-2/5">
+                              <TeamLogo src={match.team_home_badge} alt={match.match_hometeam_name} margin="right" />
+                              <Typography variant="body1" className="font-medium truncate">
+                                {match.match_hometeam_name}
+                              </Typography>
+                            </Box>
+                            
+                            <Box className="flex items-center justify-center w-1/5" sx={{ bgcolor: '#f5f5f5', borderRadius: '8px' }}>
+                              <Typography variant="h5" className="font-bold">
+                                {match.match_hometeam_score} - {match.match_awayteam_score}
+                              </Typography>
+                            </Box>
+                            
+                            <Box className="flex items-center justify-end w-2/5">
+                              <Typography variant="body1" className="font-medium truncate">
+                                {match.match_awayteam_name}
+                              </Typography>
+                              <TeamLogo src={match.team_away_badge} alt={match.match_awayteam_name} margin="left" />
+                            </Box>
+                          </Box>
+                          
+                          <Box className="flex justify-end mt-3">
+                            <Button 
+                              size="small" 
+                              variant="outlined" 
+                              color="primary"
+                              onClick={() => handleAnalyzeMatch(match.match_id)}
+                              disabled={analyzingMatchId === match.match_id}
+                              startIcon={analyzingMatchId === match.match_id ? <CircularProgress size={16} /> : <AnalyticsIcon />}
+                              sx={{ borderRadius: '20px' }}
+                            >
+                              {analyzingMatchId === match.match_id ? 'Analyse...' : 'Analyser'}
+                            </Button>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <PredictionModal />
+        
+        <Snackbar
+          open={successAlert}
+          autoHideDuration={4000}
+          onClose={() => setSuccessAlert(false)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert severity="success" sx={{ width: '100%' }}>
+            Analyse prédictive générée avec succès!
+          </Alert>
+        </Snackbar>
+      </div>
+    </MainLayout>
+  );
+};
+
+export default MatchesPage;
