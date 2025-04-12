@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Link, NavLink } from "react-router-dom";
-import logo from "/src/assets/logo.png";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -10,11 +9,11 @@ const Header = () => {
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center">
-          <img src={logo} alt="Logo" className="h-10" />
+          <span className="text-2xl font-bold text-green-600">OHCLIMAT</span>
         </Link>
 
         {/* Menu Hamburger */}
-        <button 
+        <button
           className="lg:hidden flex flex-col justify-center items-center w-10 h-10 rounded hover:bg-gray-100"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Menu principal"
@@ -24,68 +23,75 @@ const Header = () => {
           <span className={`block w-6 h-0.5 bg-gray-700 transition-transform duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-1.5' : ''}`}></span>
         </button>
 
-        {/* Navigation principale */}
+        {/* Navigation */}
         <nav className={`lg:flex gap-6 items-center ${isMenuOpen ? 'block' : 'hidden'} absolute lg:static top-16 left-0 right-0 bg-white lg:bg-transparent p-4 lg:p-0 shadow-lg lg:shadow-none`}>
-          <div className="lg:flex lg:gap-6 lg:items-center">
-            {/* Liens */}
+          <div className="lg:flex lg:gap-6 lg:items-center p-2">
+            
             <NavLink
               to="/"
               className={({ isActive }) =>
-                `block py-2 lg:py-0 ${isActive ? 'text-blue-800 font-bold' : 'text-gray-700 hover:text-blue-500'}`
+                `block py-3 px-1 lg:py-0 ${isActive ? 'text-green-600 font-bold' : 'text-gray-900 hover:text-green-500'}`
               }
               onClick={() => setIsMenuOpen(false)}
             >
-              Accueil
+              Accueil 
             </NavLink>
-            
             <NavLink
-              to="/pricing"
+              to="/nos-projets"
               className={({ isActive }) =>
-                `block py-2 lg:py-0 ${isActive ? 'text-blue-800 font-bold' : 'text-gray-700 hover:text-blue-500'}`
+                `block py-3 px-1 lg:py-0 ${isActive ? 'text-green-600 font-bold' : 'text-gray-900 hover:text-green-500'}`
               }
               onClick={() => setIsMenuOpen(false)}
             >
-              Formules
+              Nos projets
             </NavLink>
-            
+
             <NavLink
-              to="/how-it-works"
+              to="/ressources"
               className={({ isActive }) =>
-                `block py-2 lg:py-0 ${isActive ? 'text-blue-800 font-bold' : 'text-gray-700 hover:text-blue-500'}`
+                `block py-3 px-1 lg:py-0 ${isActive ? 'text-green-600 font-bold' : 'text-gray-900 hover:text-green-500'}`
               }
               onClick={() => setIsMenuOpen(false)}
             >
-              Comment ça marche
+              Ressources
             </NavLink>
-            
+
+            <NavLink
+              to="/a-propos"
+              className={({ isActive }) =>
+                `block py-3 px-1 lg:py-0 ${isActive ? 'text-green-600 font-bold' : 'text-gray-900 hover:text-green-500'}`
+              }
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Qui sommes-nous
+            </NavLink>
+
             <NavLink
               to="/contact"
               className={({ isActive }) =>
-                `block py-2 lg:py-0 ${isActive ? 'text-blue-800 font-bold' : 'text-gray-700 hover:text-blue-500'}`
+                `block py-3 px-1 lg:py-0 ${isActive ? 'text-green-600 font-bold' : 'text-gray-900 hover:text-green-500'}`
               }
               onClick={() => setIsMenuOpen(false)}
             >
               Contact
             </NavLink>
 
-            
-
-
-            {/* Boutons */}
-            <div className="flex flex-col lg:flex-row gap-2 mt-4 lg:mt-0">
+            {/* CTA Buttons */}
+            <div className="mt-4 lg:mt-0 lg:ml-4 flex flex-col lg:flex-row gap-2">
               <Link
-                to="/connexion"
-                className="bg-blue-800 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-center transition duration-300"
+                to="https://me.fedapay.com/VRfc2aYJ"
+                className="bg-green-600 hover:bg-green-500 text-white font-medium py-2 px-4 rounded-lg text-center transition duration-300 block"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Connexion
+                Faire un don
               </Link>
+
               <Link
-                to="/inscription"
-                className="bg-green-600 hover:bg-green-500 text-white font-medium py-2 px-4 rounded-lg text-center transition duration-300"
+                to="/soumettre-projet"
+                className="border border-green-600 text-green-600 hover:bg-green-100 font-medium py-2 px-4 rounded-lg text-center transition duration-300 block"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Inscription
+                Soumettre un projet
               </Link>
             </div>
           </div>

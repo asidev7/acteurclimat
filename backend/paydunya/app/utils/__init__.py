@@ -1,3 +1,0 @@
-"""
-Utilitaires pour l'application
-"""
